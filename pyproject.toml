@@ -1,0 +1,51 @@
+[project]
+name = "harp-python"
+authors = [
+    {name = "Goncalo Lopes", email = "g.lopes@neurogears.org"}
+]
+description = "A low-level interface to loading binary Harp protocol data"
+readme = "README.md"
+requires-python = ">=3.9.0"
+dynamic = ["version"]
+license = {text = "MIT License"}
+
+dependencies = [
+    "pydantic-yaml",
+    "pandas"
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+]
+
+[project.urls]
+"Bug Tracker" = "https://github.com/harp-tech/harp-python/issues"
+"Source Code" = "https://github.com/harp-tech/harp-python"
+
+[project.optional-dependencies]
+dev = [
+    "datamodel-code-generator",
+    "setuptools_scm"
+]
+
+[build-system]
+requires = [
+    "setuptools>=45",
+    "wheel",
+    "setuptools_scm[toml]>=6.2",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["harp*"]
+
+[tool.setuptools_scm]
