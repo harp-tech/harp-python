@@ -62,5 +62,6 @@ extend-exclude = '''
   ^/LICENSE
   ^/README.md
   | harp/model.py
+  | reflex-generator
 )
 '''
