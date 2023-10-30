@@ -8,13 +8,22 @@ from harp.io import read
 _camel_to_snake_regex = re.compile(r"(?<!^)(?=[A-Z])")
 
 
-class Reader:
+class RegisterReader:
     register: Register
     read: Callable[[str], DataFrame]
 
     def __init__(self, register: Register, read: Callable[[str], DataFrame]) -> None:
         self.register = register
         self.read = read
+
+
+class DeviceReader:
+    model: Model
+    registers: dict[str, RegisterReader]
+
+    def __init__(self, model: Model, registers: dict[str, RegisterReader]) -> None:
+        self.model = model
+        self.registers = registers
 
 
 def compose(f, g):
@@ -33,7 +42,14 @@ def create_bitreader(mask):
     return lambda xs: ((xs & mask) != 0)
 
 
-def create_reader(device: Model, name: str):
+def create_reader(device: Model):
+    reg_readers = {
+        create_register_reader(device, name) for name in device.registers.keys()
+    }
+    return DeviceReader(device, reg_readers)
+
+
+def create_register_reader(device: Model, name: str):
     register = device.registers[name]
     reader = read
 
@@ -50,7 +66,7 @@ def create_reader(device: Model, name: str):
                 return DataFrame({n: f(df[0]) for n, f in lookup}, index=df.index)
 
             reader = compose(unpack, reader)
-            return Reader(register, reader)
+            return RegisterReader(register, reader)
 
         groupMask = device.groupMasks.get(key)
         if groupMask is not None:
@@ -58,14 +74,14 @@ def create_reader(device: Model, name: str):
             lookup = {value.root: name for name, value in groupMask.values.items()}
             reader = partial(reader, columns=[name])
             reader = compose(lambda df: df.map(lambda x: lookup[x]), reader)
-            return Reader(register, reader)
+            return RegisterReader(register, reader)
 
     if register.payloadSpec is not None:
         columns = register.payloadSpec.keys()
         columns = keys_camel_to_snake(columns)
         reader = partial(reader, columns=columns)
-        return Reader(register, reader)
+        return RegisterReader(register, reader)
 
     columns = [id_camel_to_snake(name)]
     reader = partial(reader, columns=columns)
-    return Reader(register, reader)
+    return RegisterReader(register, reader)
