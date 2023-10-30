@@ -18,11 +18,11 @@ class RegisterReader:
 
 
 class DeviceReader:
-    model: Model
+    device: Model
     registers: dict[str, RegisterReader]
 
-    def __init__(self, model: Model, registers: dict[str, RegisterReader]) -> None:
-        self.model = model
+    def __init__(self, device: Model, registers: dict[str, RegisterReader]) -> None:
+        self.device = device
         self.registers = registers
 
     def __dir__(self) -> Iterable[str]:
