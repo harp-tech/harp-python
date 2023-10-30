@@ -1,32 +1,41 @@
+from os import PathLike
+from typing import Any, Optional, Union
+from pandas._typing import Axes
 import numpy as np
 import pandas as pd
 
 _SECONDS_PER_TICK = 32e6
 payloadtypes = {
-    1 : np.dtype(np.uint8),
-    2 : np.dtype(np.uint16),
-    4 : np.dtype(np.uint32),
-    8 : np.dtype(np.uint64),
-    129 : np.dtype(np.int8),
-    130 : np.dtype(np.int16),
-    132 : np.dtype(np.int32),
-    136 : np.dtype(np.int64),
-    68 : np.dtype(np.float32)
+    1: np.dtype(np.uint8),
+    2: np.dtype(np.uint16),
+    4: np.dtype(np.uint32),
+    8: np.dtype(np.uint64),
+    129: np.dtype(np.int8),
+    130: np.dtype(np.int16),
+    132: np.dtype(np.int32),
+    136: np.dtype(np.int64),
+    68: np.dtype(np.float32),
 }
 
-def read(file: str, columns=None):
-    '''
+
+def read(
+    file: Union[str, bytes, PathLike[Any], np._IOProtocol],
+    columns: Optional[Axes] = None,
+):
+    """
     Read single-register Harp data from the specified file.
-    
-    :param str file: The path to a Harp binary file containing data from a single device register.
-    :param str or array-like names: The optional column labels to use for the data values.
+
+    :param str file or str or Path: Open file object or filename containing
+      binary data from a single device register.
+    :param str or array-like names: The optional column labels to use for
+      the data values.
     :return: A pandas data frame containing harp event data, sorted by time.
-    '''
+    """
     data = np.fromfile(file, dtype=np.uint8)
     if len(data) == 0:
         return pd.DataFrame(
-            columns=columns,
-            index=pd.Index([], dtype=np.float64, name='time'))
+            columns=columns, index=pd.Index([], dtype=np.float64, name="time")
+        )
 
     stride = data[1] + 2
     length = len(data) // stride
@@ -40,8 +49,10 @@ def read(file: str, columns=None):
     payload = np.ndarray(
         payloadshape,
         dtype=payloadtype,
-        buffer=data, offset=11,
-        strides=(stride, elementsize))
+        buffer=data,
+        offset=11,
+        strides=(stride, elementsize),
+    )
     time = pd.Series(seconds)
-    time.name = 'time'
+    time.name = "time"
     return pd.DataFrame(payload, index=time, columns=columns)
