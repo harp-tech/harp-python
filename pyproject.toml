@@ -31,15 +31,17 @@ classifiers = [
 [project.optional-dependencies]
 dev = [
     "datamodel-code-generator",
-    "setuptools_scm",
     "black"
+]
+jupyter = [
+    "ipykernel"
 ]
 
 [build-system]
 requires = [
-    "setuptools>=45",
     "wheel",
-    "setuptools_scm[toml]>=6.2",
+    "setuptools",
+    "setuptools_scm[toml]",
 ]
 build-backend = "setuptools.build_meta"
 
