@@ -25,6 +25,12 @@ class DeviceReader:
         self.model = model
         self.registers = registers
 
+    def __dir__(self) -> Iterable[str]:
+        return self.registers.keys()
+
+    def __getattr__(self, __name: str) -> RegisterReader:
+        return self.registers[__name]
+
 
 def compose(f, g):
     return lambda *a, **kw: f(g(*a, **kw))
@@ -44,7 +50,7 @@ def create_bitreader(mask):
 
 def create_reader(device: Model):
     reg_readers = {
-        create_register_reader(device, name) for name in device.registers.keys()
+        name: create_register_reader(device, name) for name in device.registers.keys()
     }
     return DeviceReader(device, reg_readers)
 
