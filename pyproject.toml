@@ -31,7 +31,8 @@ classifiers = [
 [project.optional-dependencies]
 dev = [
     "datamodel-code-generator",
-    "setuptools_scm"
+    "setuptools_scm",
+    "black"
 ]
 
 [build-system]
@@ -49,3 +50,16 @@ include-package-data = true
 include = ["harp*"]
 
 [tool.setuptools_scm]
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+(
+  ^/LICENSE
+  ^/README.md
+)
+'''
