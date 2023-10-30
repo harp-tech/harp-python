@@ -1,0 +1,3 @@
+[submodule "reflex-generator"]
+	path = reflex-generator
+	url = https://github.com/harp-tech/reflex-generator.git
