@@ -1,5 +1,5 @@
 from os import PathLike
-from typing import Any, Optional, Union
+from typing import Any, BinaryIO, Optional, Union
 from pandas._typing import Axes
 import numpy as np
 import pandas as pd
@@ -19,7 +19,7 @@ payloadtypes = {
 
 
 def read(
-    file: Union[str, bytes, PathLike[Any], np._IOProtocol],
+    file: Union[str, bytes, PathLike[Any], BinaryIO],
     columns: Optional[Axes] = None,
 ):
     """
