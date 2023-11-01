@@ -4,7 +4,7 @@ from pandas._typing import Axes
 import numpy as np
 import pandas as pd
 
-_SECONDS_PER_TICK = 32e6
+_SECONDS_PER_TICK = 32e-6
 payloadtypes = {
     1: np.dtype(np.uint8),
     2: np.dtype(np.uint16),
