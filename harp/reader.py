@@ -1,8 +1,9 @@
 import re
+from math import log2
 from functools import partial
 from pandas import DataFrame, Series
 from typing import Iterable, Callable, Union
-from harp.model import BitMask, GroupMask, MaskValueItem, Model, Register
+from harp.model import BitMask, GroupMask, MaskValueItem, Model, PayloadMember, Register
 from harp.io import read
 
 _camel_to_snake_regex = re.compile(r"(?<!^)(?=[A-Z])")
@@ -40,10 +41,6 @@ def _id_camel_to_snake(id: str):
     return _camel_to_snake_regex.sub("_", id).lower()
 
 
-def _keys_camel_to_snake(keys: Iterable[str]):
-    return [_id_camel_to_snake(k) for k in keys]
-
-
 def _create_bit_parser(mask: Union[int, MaskValueItem]):
     def parser(xs: Series) -> Series:
         return (xs & mask) != 0
@@ -63,12 +60,55 @@ def _create_bitmask_parser(bitMask: BitMask):
     return parser
 
 
+def _create_groupmask_lookup(groupMask: GroupMask):
+    return {v.root: n for n, v in groupMask.values.items()}
+
+
 def _create_groupmask_parser(name: str, groupMask: GroupMask):
-    name = _id_camel_to_snake(name)
-    lookup = {v.root: n for n, v in groupMask.values.items()}
+    lookup = _create_groupmask_lookup(groupMask)
 
     def parser(df: DataFrame):
-        return DataFrame({name: df.map(lambda x: lookup[x])})
+        return DataFrame({name: df[0].map(lookup)})
+
+    return parser
+
+
+def _mask_shift(mask: int):
+    lsb = mask & (~mask + 1)
+    return int(log2(lsb))
+
+
+def _create_payloadmember_parser(device: Model, member: PayloadMember):
+    offset = member.offset
+    if offset is None:
+        offset = 0
+
+    shift = None
+    if member.mask is not None:
+        shift = _mask_shift(member.mask)
+
+    lookup = None
+    if member.maskType is not None:
+        key = member.maskType.root
+        groupMask = device.groupMasks.get(key)
+        if groupMask is not None:
+            lookup = _create_groupmask_lookup(groupMask)
+
+    is_boolean = False
+    if member.interfaceType is not None:
+        is_boolean = member.interfaceType.root == "bool"
+
+    def parser(df: DataFrame):
+        series = df[offset]
+        if member.mask is not None:
+            series = series & member.mask
+            if shift > 0:
+                series = Series(series.values >> shift, series.index)
+        if is_boolean:
+            series = series != 0
+        elif lookup is not None:
+            series = series.map(lookup)
+        return series
 
     return parser
 
@@ -92,9 +132,15 @@ def _create_register_reader(device: Model, name: str):
             return RegisterReader(register, reader)
 
     if register.payloadSpec is not None:
-        columns = register.payloadSpec.keys()
-        columns = _keys_camel_to_snake(columns)
-        reader = partial(reader, columns=columns)
+        payload_parsers = [
+            (_id_camel_to_snake(key), _create_payloadmember_parser(device, member))
+            for key, member in register.payloadSpec.items()
+        ]
+
+        def parser(df: DataFrame):
+            return DataFrame({n: f(df) for n, f in payload_parsers}, index=df.index)
+
+        reader = _compose(parser, reader)
         return RegisterReader(register, reader)
 
     columns = [_id_camel_to_snake(name)]
