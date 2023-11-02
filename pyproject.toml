@@ -3,7 +3,7 @@ name = "harp-python"
 authors = [
     {name = "Goncalo Lopes", email = "g.lopes@neurogears.org"}
 ]
-description = "A low-level interface to loading binary Harp protocol data"
+description = "A low-level interface for loading binary Harp protocol data"
 readme = "README.md"
 requires-python = ">=3.9.0"
 dynamic = ["version"]
@@ -34,7 +34,8 @@ dev = [
     "black"
 ]
 jupyter = [
-    "ipykernel"
+    "ipykernel",
+    "matplotlib"
 ]
 
 [build-system]
