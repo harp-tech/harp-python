@@ -1,0 +1,145 @@
+# yaml-language-server: $schema=registers.json
+registers:
+  WhoAmI:
+    address: 0
+    type: U16
+    access: Read
+    description: Specifies the identity class of the device.
+  HardwareVersionHigh:
+    address: 1
+    type: U8
+    access: Read
+    description: Specifies the major hardware version of the device.
+  HardwareVersionLow:
+    address: 2
+    type: U8
+    access: Read
+    description: Specifies the minor hardware version of the device.
+  AssemblyVersion:
+    address: 3
+    type: U8
+    access: Read
+    description: Specifies the version of the assembled components in the device.
+  CoreVersionHigh:
+    address: 4
+    type: U8
+    access: Read
+    description: Specifies the major version of the Harp core implemented by the device.
+  CoreVersionLow:
+    address: 5
+    type: U8
+    access: Read
+    description: Specifies the minor version of the Harp core implemented by the device.
+  FirmwareVersionHigh:
+    address: 6
+    type: U8
+    access: Read
+    description: Specifies the major version of the Harp core implemented by the device.
+  FirmwareVersionLow:
+    address: 7
+    type: U8
+    access: Read
+    description: Specifies the minor version of the Harp core implemented by the device.
+  TimestampSeconds:
+    address: 8
+    type: U32
+    access: [Read, Write, Event]
+    description: Stores the integral part of the system timestamp, in seconds.
+    volatile: true
+  TimestampMicroseconds:
+    address: 9
+    type: U16
+    access: Read
+    description: Stores the fractional part of the system timestamp, in microseconds.
+    volatile: true
+  OperationControl:
+    address: 10
+    type: U8
+    access: Write
+    description: Stores the configuration mode of the device.
+    payloadSpec:
+      OperationMode:
+        description: Specifies the operation mode of the device.
+        maskType: OperationMode
+        mask: 0x3
+      DumpRegisters:
+        description: Specifies whether the device should report the content of all registers on initialization.
+        interfaceType: bool
+        mask: 0x8
+      MuteReplies:
+        description: Specifies whether the replies to all commands will be muted, i.e. not sent by the device.
+        interfaceType: bool
+        mask: 0x10
+      VisualIndicators:
+        description: Specifies the state of all visual indicators on the device.
+        maskType: LedState
+        mask: 0x20
+      OperationLed:
+        description: Specifies whether the device state LED should report the operation mode of the device.
+        maskType: LedState
+        mask: 0x40
+      Heartbeat:
+        description: Specifies whether the device should report the content of the seconds register each second.
+        maskType: EnableFlag
+        mask: 0x80
+  ResetDevice:
+    address: 11
+    type: U8
+    access: Write
+    maskType: ResetFlags
+    description: Resets the device and saves non-volatile registers.
+  DeviceName:
+    address: 12
+    type: U8
+    length: 25
+    access: Write
+    description: Stores the user-specified device name.
+  SerialNumber:
+    address: 13
+    type: U16
+    access: Write
+    description: Specifies the unique serial number of the device.
+  ClockConfiguration:
+    address: 14
+    type: U8
+    access: Write
+    maskType: ClockConfigurationFlags
+    description: Specifies the configuration for the device synchronization clock.
+groupMasks:
+  OperationMode:
+    description: Specifies the operation mode of the device.
+    values:
+      Standby: 0
+      Active: 1
+      Speed: 3
+  EnableFlag:
+    description: Specifies whether a specific register flag is enabled or disabled.
+    values:
+      Disabled: 0
+      Enabled: 1
+  LedState:
+    description: Specifies the state of an LED on the device.
+    values:
+      Off: 0
+      On: 1
+bitMasks:
+  ResetFlags:
+    description: Specifies the behavior of the non-volatile registers when resetting the device.
+    bits:
+      None: 0
+      RestoreDefault: 0x1
+      RestoreEeprom: 0x2
+      Save: 0x4
+      RestoreName: 0x8
+      BootFromDefault: 0x40
+      BootFromEeprom: 0x80
+  ClockConfigurationFlags:
+    description: Specifies configuration flags for the device synchronization clock.
+    bits:
+      None: 0
+      ClockRepeater: 0x1
+      ClockGenerator: 0x2
+      RepeaterCapability: 0x8
+      GeneratorCapability: 0x10
+      ClockUnlock: 0x40
+      ClockLock: 0x80

@@ -41,7 +41,7 @@ def _id_camel_to_snake(id: str):
     return _camel_to_snake_regex.sub("_", id).lower()
 
 
-def _create_bit_parser(mask: Union[int, MaskValueItem]):
+def _create_bit_parser(mask: int):
     def parser(xs: Series) -> Series:
         return (xs & mask) != 0
 
@@ -50,7 +50,7 @@ def _create_bit_parser(mask: Union[int, MaskValueItem]):
 
 def _create_bitmask_parser(bitMask: BitMask):
     lookup = [
-        (_id_camel_to_snake(k), _create_bit_parser(v.root))
+        (_id_camel_to_snake(k), _create_bit_parser(int(v.root)))
         for k, v in bitMask.bits.items()
     ]
 
@@ -61,7 +61,7 @@ def _create_bitmask_parser(bitMask: BitMask):
 
 
 def _create_groupmask_lookup(groupMask: GroupMask):
-    return {v.root: n for n, v in groupMask.values.items()}
+    return {int(v.root): n for n, v in groupMask.values.items()}
 
 
 def _create_groupmask_parser(name: str, groupMask: GroupMask):

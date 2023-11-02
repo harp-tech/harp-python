@@ -32,9 +32,13 @@ class MaskValueItem(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
+    value: int = Field(..., description='Specifies the numerical mask value.')
     description: Optional[str] = Field(
         None, description='Specifies a summary description of the mask value function.'
     )
+
+    def __int__(self):
+        return self.value
 
 
 class MaskValue(RootModel[Union[int, MaskValueItem]]):
