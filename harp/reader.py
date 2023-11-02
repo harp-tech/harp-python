@@ -41,10 +41,6 @@ def _id_camel_to_snake(id: str):
     return _camel_to_snake_regex.sub("_", id).lower()
 
 
-def _keys_camel_to_snake(keys: Iterable[str]):
-    return [_id_camel_to_snake(k) for k in keys]
-
-
 def _create_bit_parser(mask: Union[int, MaskValueItem]):
     def parser(xs: Series) -> Series:
         return (xs & mask) != 0
