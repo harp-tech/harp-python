@@ -20,16 +20,24 @@ payloadtypes = {
 
 def read(
     file: Union[str, bytes, PathLike[Any], BinaryIO],
+    address: Optional[int] = None,
+    dtype: Optional[np.dtype] = None,
+    length: Optional[int] = None,
     columns: Optional[Axes] = None,
 ):
     """
     Read single-register Harp data from the specified file.
 
-    :param str file or str or Path: Open file object or filename containing
-      binary data from a single device register.
-    :param str or array-like names: The optional column labels to use for
-      the data values.
-    :return: A pandas data frame containing harp event data, sorted by time.
+    :param file: Open file object or filename containing binary data from
+      a single device register.
+    :param address: Expected register address. If specified, the address of
+      the first message in the file is used for validation.
+    :param dtype: Expected data type of the register payload. If specified, the
+      payload type of the first message in the file is used for validation.
+    :param length: Expected number of elements in register payload. If specified,
+      the payload length of the first message in the file is used for validation.
+    :param columns: The optional column labels to use for the data values.
+    :return: A pandas data frame containing message data, sorted by time.
     """
     data = np.fromfile(file, dtype=np.uint8)
     if len(data) == 0:
@@ -37,14 +45,23 @@ def read(
             columns=columns, index=pd.Index([], dtype=np.float64, name="time")
         )
 
+    if address is not None and address != data[2]:
+        raise ValueError(f"expected address {address} but got {data[2]}")
+
     stride = data[1] + 2
-    length = len(data) // stride
+    nrows = len(data) // stride
     payloadsize = stride - 12
     payloadtype = payloadtypes[data[4] & ~0x10]
+    if dtype is not None and dtype != payloadtype:
+        raise ValueError(f"expected payload type {dtype} but got {payloadtype}")
+
     elementsize = payloadtype.itemsize
-    payloadshape = (length, payloadsize // elementsize)
-    seconds = np.ndarray(length, dtype=np.uint32, buffer=data, offset=5, strides=stride)
-    micros = np.ndarray(length, dtype=np.uint16, buffer=data, offset=9, strides=stride)
+    payloadshape = (nrows, payloadsize // elementsize)
+    if length is not None and length != payloadshape[1]:
+        raise ValueError(f"expected payload length {length} but got {payloadshape[1]}")
+
+    seconds = np.ndarray(nrows, dtype=np.uint32, buffer=data, offset=5, strides=stride)
+    micros = np.ndarray(nrows, dtype=np.uint16, buffer=data, offset=9, strides=stride)
     seconds = micros * _SECONDS_PER_TICK + seconds
     payload = np.ndarray(
         payloadshape,
