@@ -1,9 +1,11 @@
 import re
 from math import log2
+from os import PathLike
 from functools import partial
 from pandas import DataFrame, Series
-from typing import Iterable, Callable, Union
-from harp.model import BitMask, GroupMask, MaskValueItem, Model, PayloadMember, Register
+from typing import Any, BinaryIO, Iterable, Callable, Optional, Union
+from pandas._typing import Axes
+from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
 from harp.io import read
 
 _camel_to_snake_regex = re.compile(r"(?<!^)(?=[A-Z])")
@@ -13,7 +15,11 @@ class RegisterReader:
     register: Register
     read: Callable[[str], DataFrame]
 
-    def __init__(self, register: Register, read: Callable[[str], DataFrame]) -> None:
+    def __init__(
+        self,
+        register: Register,
+        read: Callable[[Union[str, bytes, PathLike[Any], BinaryIO]], DataFrame],
+    ) -> None:
         self.register = register
         self.read = read
 
@@ -113,9 +119,25 @@ def _create_payloadmember_parser(device: Model, member: PayloadMember):
     return parser
 
 
-def _create_register_reader(device: Model, name: str):
+def _create_register_reader(register: Register):
+    def reader(
+        file: Union[str, bytes, PathLike[Any], BinaryIO], columns: Optional[Axes] = None
+    ):
+        data = read(
+            file,
+            address=register.address,
+            dtype=register.type,
+            length=register.length,
+            columns=columns,
+        )
+        return data
+
+    return reader
+
+
+def _create_register_parser(device: Model, name: str):
     register = device.registers[name]
-    reader = read
+    reader = _create_register_reader(register)
 
     if register.maskType is not None:
         key = register.maskType.root
@@ -150,6 +172,6 @@ def _create_register_reader(device: Model, name: str):
 
 def create_reader(device: Model):
     reg_readers = {
-        name: _create_register_reader(device, name) for name in device.registers.keys()
+        name: _create_register_parser(device, name) for name in device.registers.keys()
     }
     return DeviceReader(device, reg_readers)
