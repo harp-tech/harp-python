@@ -43,6 +43,10 @@ testdata = [
         expected_length=2,  # actual length is 1
         expected_error=ValueError,
     ),
+    DataFileParam(
+        path="data/write_0.bin",
+        expected_address=0,
+        expected_rows=4)
 ]
 
 

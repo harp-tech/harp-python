@@ -48,10 +48,27 @@ def read(
     if address is not None and address != data[2]:
         raise ValueError(f"expected address {address} but got {data[2]}")
 
+    index = None
     stride = data[1] + 2
     nrows = len(data) // stride
-    payloadsize = stride - 12
-    payloadtype = payloadtypes[data[4] & ~0x10]
+    payloadtype = data[4]
+    payloadoffset = 5
+    if payloadtype & 0x10 != 0:
+        seconds = np.ndarray(
+            nrows, dtype=np.uint32, buffer=data, offset=payloadoffset, strides=stride
+        )
+        payloadoffset += 4
+        micros = np.ndarray(
+            nrows, dtype=np.uint16, buffer=data, offset=payloadoffset, strides=stride
+        )
+        payloadoffset += 2
+        seconds = micros * _SECONDS_PER_TICK + seconds
+        payloadtype = payloadtype & ~0x10
+        index = pd.Series(seconds)
+        index.name = "time"
+
+    payloadsize = stride - payloadoffset - 1
+    payloadtype = payloadtypes[payloadtype]
     if dtype is not None and dtype != payloadtype:
         raise ValueError(f"expected payload type {dtype} but got {payloadtype}")
 
@@ -60,16 +77,12 @@ def read(
     if length is not None and length != payloadshape[1]:
         raise ValueError(f"expected payload length {length} but got {payloadshape[1]}")
 
-    seconds = np.ndarray(nrows, dtype=np.uint32, buffer=data, offset=5, strides=stride)
-    micros = np.ndarray(nrows, dtype=np.uint16, buffer=data, offset=9, strides=stride)
-    seconds = micros * _SECONDS_PER_TICK + seconds
     payload = np.ndarray(
         payloadshape,
         dtype=payloadtype,
         buffer=data,
-        offset=11,
+        offset=payloadoffset,
         strides=(stride, elementsize),
     )
-    time = pd.Series(seconds)
-    time.name = "time"
-    return pd.DataFrame(payload, index=time, columns=columns)
+
+    return pd.DataFrame(payload, index=index, columns=columns)
