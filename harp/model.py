@@ -6,20 +6,21 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
+from typing_extensions import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel, conint
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, RootModel, conint, field_serializer
 
 
-class Type(Enum):
-    U8 = 'U8'
-    S8 = 'S8'
-    U16 = 'U16'
-    S16 = 'S16'
-    U32 = 'U32'
-    S32 = 'S32'
-    U64 = 'U64'
-    S64 = 'S64'
-    Float = 'Float'
+class PayloadType(str, Enum):
+    U8 = 'uint8'
+    S8 = 'int8'
+    U16 = 'uint16'
+    S16 = 'int16'
+    U32 = 'uint32'
+    S32 = 'int32'
+    U64 = 'uint64'
+    S64 = 'int64'
+    Float = 'float32'
 
 
 class Access(Enum):
@@ -129,9 +130,9 @@ class Register(BaseModel):
     address: conint(le=255) = Field(
         ..., description='Specifies the unique 8-bit address of the register.'
     )
-    type: Type
+    type: Annotated[PayloadType, BeforeValidator(lambda v: PayloadType[v])]
     length: Optional[conint(ge=1)] = Field(
-        None, description='Specifies the length of the register payload.'
+        default=1, description='Specifies the length of the register payload.'
     )
     access: Union[Access, List[Access]] = Field(
         ..., description='Specifies the expected use of the register.'
@@ -154,6 +155,10 @@ class Register(BaseModel):
     payloadSpec: Optional[Dict[str, PayloadMember]] = None
     interfaceType: Optional[InterfaceType] = None
     converter: Optional[Converter] = None
+
+    @field_serializer('type')
+    def _serialize_type(self, type: PayloadType):
+        return type.name
 
 
 class Registers(BaseModel):
