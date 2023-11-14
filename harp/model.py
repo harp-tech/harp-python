@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 from typing_extensions import Annotated
 
 from pydantic import (
@@ -14,7 +14,6 @@ from pydantic import (
     ConfigDict,
     Field,
     RootModel,
-    conint,
     field_serializer,
 )
 
@@ -135,13 +134,19 @@ class Visibility(Enum):
 
 
 class Register(BaseModel):
-    address: conint(le=255) = Field(
-        ..., description="Specifies the unique 8-bit address of the register."
-    )
+    address: Annotated[
+        int,
+        Field(
+            le=255, description="Specifies the unique 8-bit address of the register."
+        ),
+    ]
     type: Annotated[PayloadType, BeforeValidator(lambda v: PayloadType[v])]
-    length: Optional[conint(ge=1)] = Field(
-        default=1, description="Specifies the length of the register payload."
-    )
+    length: Annotated[
+        Optional[int],
+        Field(
+            ge=1, default=1, description="Specifies the length of the register payload."
+        ),
+    ]
     access: Union[Access, List[Access]] = Field(
         ..., description="Specifies the expected use of the register."
     )

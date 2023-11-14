@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
-from typing import Iterable, Optional, Type
+from os import PathLike
+from typing import Iterable, Optional, Type, Union
 from contextlib import nullcontext
 from pytest import mark
 from pathlib import Path
@@ -12,7 +13,7 @@ datapath = Path(__file__).parent
 
 @dataclass
 class DataFileParam:
-    path: str
+    path: Union[str, PathLike]
     expected_rows: int
     expected_cols: Optional[Iterable[str]] = None
     expected_address: Optional[int] = None
@@ -36,7 +37,7 @@ testdata = [
     DataFileParam(
         path="data/device_0.bin",
         expected_rows=1,
-        expected_dtype="uint8",  # actual dtype is uint16
+        expected_dtype=np.dtype("uint8"),  # actual dtype is uint16
         expected_error=ValueError,
     ),
     DataFileParam(
@@ -55,7 +56,7 @@ testdata = [
 @mark.parametrize("dataFile", testdata)
 def test_read(dataFile: DataFileParam):
     context = pytest.raises if dataFile.expected_error is not None else nullcontext
-    with context(dataFile.expected_error):
+    with context(dataFile.expected_error):  # type: ignore
         data = read(
             dataFile.path,
             address=dataFile.expected_address,

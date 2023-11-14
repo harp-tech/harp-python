@@ -84,7 +84,7 @@ def read(
         time = micros * _SECONDS_PER_TICK + seconds
         payloadtype = payloadtype & ~0x10
         if epoch is not None:
-            time = epoch + pd.to_timedelta(time, "s")
+            time = epoch + pd.to_timedelta(time, "s") # type: ignore
         index = pd.Series(time)
         index.name = "time"
 
@@ -111,6 +111,6 @@ def read(
         msgtype = np.ndarray(
             nrows, dtype=np.uint8, buffer=data, offset=0, strides=stride
         )
-        msgtype = pd.Categorical.from_codes(msgtype, categories=_messagetypes)
+        msgtype = pd.Categorical.from_codes(msgtype, categories=_messagetypes) # type: ignore
         result["type"] = msgtype
     return result
