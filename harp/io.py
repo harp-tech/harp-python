@@ -1,9 +1,13 @@
+from datetime import datetime
 from enum import IntEnum
 from os import PathLike
 from typing import Any, BinaryIO, Optional, Union
 from pandas._typing import Axes
 import numpy as np
 import pandas as pd
+
+"""The reference epoch for UTC harp time."""
+REFERENCE_EPOCH = datetime(1904, 1, 1)
 
 
 class MessageType(IntEnum):
@@ -34,6 +38,7 @@ def read(
     dtype: Optional[np.dtype] = None,
     length: Optional[int] = None,
     columns: Optional[Axes] = None,
+    epoch: Optional[datetime] = None,
     keep_type: bool = False,
 ):
     """
@@ -48,6 +53,8 @@ def read(
     :param length: Expected number of elements in register payload. If specified,
       the payload length of the first message in the file is used for validation.
     :param columns: The optional column labels to use for the data values.
+    :param epoch: Reference datetime at which time zero begins. If specified,
+      the result data frame will have a datetime index.
     :param keep_type: Specifies whether to include a column with the message type.
     :return: A pandas data frame containing message data, sorted by time.
     """
@@ -74,9 +81,11 @@ def read(
             nrows, dtype=np.uint16, buffer=data, offset=payloadoffset, strides=stride
         )
         payloadoffset += 2
-        seconds = micros * _SECONDS_PER_TICK + seconds
+        time = micros * _SECONDS_PER_TICK + seconds
         payloadtype = payloadtype & ~0x10
-        index = pd.Series(seconds)
+        if epoch is not None:
+            time = epoch + pd.to_timedelta(time, "s")
+        index = pd.Series(time)
         index.name = "time"
 
     payloadsize = stride - payloadoffset - 1
