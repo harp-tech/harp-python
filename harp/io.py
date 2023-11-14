@@ -1,10 +1,20 @@
+from enum import IntEnum
 from os import PathLike
 from typing import Any, BinaryIO, Optional, Union
 from pandas._typing import Axes
 import numpy as np
 import pandas as pd
 
+
+class MessageType(IntEnum):
+    NA = 0
+    READ = 1
+    WRITE = 2
+    EVENT = 3
+
+
 _SECONDS_PER_TICK = 32e-6
+_messagetypes = [type.name for type in MessageType]
 payloadtypes = {
     1: np.dtype(np.uint8),
     2: np.dtype(np.uint16),
@@ -24,6 +34,7 @@ def read(
     dtype: Optional[np.dtype] = None,
     length: Optional[int] = None,
     columns: Optional[Axes] = None,
+    keep_type: bool = False,
 ):
     """
     Read single-register Harp data from the specified file.
@@ -37,6 +48,7 @@ def read(
     :param length: Expected number of elements in register payload. If specified,
       the payload length of the first message in the file is used for validation.
     :param columns: The optional column labels to use for the data values.
+    :param keep_type: Specifies whether to include a column with the message type.
     :return: A pandas data frame containing message data, sorted by time.
     """
     data = np.fromfile(file, dtype=np.uint8)
@@ -85,4 +97,11 @@ def read(
         strides=(stride, elementsize),
     )
 
-    return pd.DataFrame(payload, index=index, columns=columns)
+    result = pd.DataFrame(payload, index=index, columns=columns)
+    if keep_type:
+        msgtype = np.ndarray(
+            nrows, dtype=np.uint8, buffer=data, offset=0, strides=stride
+        )
+        msgtype = pd.Categorical.from_codes(msgtype, categories=_messagetypes)
+        result["type"] = msgtype
+    return result
