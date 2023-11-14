@@ -2,18 +2,20 @@ import re
 from math import log2
 from os import PathLike
 from functools import partial
+from numpy import dtype
 from pandas import DataFrame, Series
 from typing import Any, BinaryIO, Iterable, Callable, Optional, Union
 from pandas._typing import Axes
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
 from harp.io import read
+from harp.schema import read_schema
 
 _camel_to_snake_regex = re.compile(r"(?<!^)(?=[A-Z])")
 
 
 class RegisterReader:
     register: Register
-    read: Callable[[str], DataFrame]
+    read: Callable[[Union[str, bytes, PathLike[Any], BinaryIO]], DataFrame]
 
     def __init__(
         self,
@@ -89,14 +91,14 @@ def _create_payloadmember_parser(device: Model, member: PayloadMember):
     if offset is None:
         offset = 0
 
-    shift = None
+    shift = 0
     if member.mask is not None:
         shift = _mask_shift(member.mask)
 
     lookup = None
     if member.maskType is not None:
         key = member.maskType.root
-        groupMask = device.groupMasks.get(key)
+        groupMask = None if device.groupMasks is None else device.groupMasks.get(key)
         if groupMask is not None:
             lookup = _create_groupmask_lookup(groupMask)
 
@@ -109,7 +111,7 @@ def _create_payloadmember_parser(device: Model, member: PayloadMember):
         if member.mask is not None:
             series = series & member.mask
             if shift > 0:
-                series = Series(series.values >> shift, series.index)
+                series = Series(series.values >> shift, series.index) # type: ignore
         if is_boolean:
             series = series != 0
         elif lookup is not None:
@@ -126,7 +128,7 @@ def _create_register_reader(register: Register):
         data = read(
             file,
             address=register.address,
-            dtype=register.type,
+            dtype=dtype(register.type),
             length=register.length,
             columns=columns,
         )
@@ -141,13 +143,13 @@ def _create_register_parser(device: Model, name: str):
 
     if register.maskType is not None:
         key = register.maskType.root
-        bitMask = device.bitMasks.get(key)
+        bitMask = None if device.bitMasks is None else device.bitMasks.get(key)
         if bitMask is not None:
             parser = _create_bitmask_parser(bitMask)
             reader = _compose(parser, reader)
             return RegisterReader(register, reader)
 
-        groupMask = device.groupMasks.get(key)
+        groupMask = None if device.groupMasks is None else device.groupMasks.get(key)
         if groupMask is not None:
             parser = _create_groupmask_parser(name, groupMask)
             reader = _compose(parser, reader)
@@ -170,7 +172,8 @@ def _create_register_parser(device: Model, name: str):
     return RegisterReader(register, reader)
 
 
-def create_reader(device: Model):
+def create_reader(file: Union[str, PathLike], include_common_registers: bool = True):
+    device = read_schema(file, include_common_registers)
     reg_readers = {
         name: _create_register_parser(device, name) for name in device.registers.keys()
     }
