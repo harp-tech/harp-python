@@ -15,7 +15,7 @@ class MessageType(IntEnum):
 
 _SECONDS_PER_TICK = 32e-6
 _messagetypes = [type.name for type in MessageType]
-payloadtypes = {
+_payloadtypes = {
     1: np.dtype(np.uint8),
     2: np.dtype(np.uint16),
     4: np.dtype(np.uint32),
@@ -80,7 +80,7 @@ def read(
         index.name = "time"
 
     payloadsize = stride - payloadoffset - 1
-    payloadtype = payloadtypes[payloadtype]
+    payloadtype = _payloadtypes[payloadtype]
     if dtype is not None and dtype != payloadtype:
         raise ValueError(f"expected payload type {dtype} but got {payloadtype}")
 
