@@ -1,0 +1,35 @@
+%YAML 1.1
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/harp-tech/reflex-generator/main/schema/device.json
+device: TestDevice
+whoAmI: 0000
+firmwareVersion: "0.1"
+hardwareTargets: "0.1"
+registers:
+  DigitalInputState:
+    address: 32
+    access: Event
+    type: U8
+    maskType: DigitalInputs
+    description: Reports the state of the digital input lines.
+  DigitalInputMode:
+    address: 33
+    access: Write
+    type: U8
+    maskType: DigitalInputs
+    description: Reports the state of the digital input lines.
+bitMasks:
+  DigitalInputs:
+    description: Specifies the state of the digital input lines.
+    bits:
+      DI0: 0x1
+      DI1: 0x2
+      DI2: 0x4
+      DI3: 0x8
+groupMasks:
+  InputMode:
+    description: Specifies when the device reports the state of digital input lines.
+    values:
+      Rising: 0
+      Falling: 1
+      Both: 2
