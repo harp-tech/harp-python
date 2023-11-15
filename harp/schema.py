@@ -1,18 +1,14 @@
 from os import PathLike
-from pathlib import Path
 from typing import TextIO, Union
 from harp.model import Model, Registers
 from pydantic_yaml import parse_yaml_raw_as
+from importlib import resources
 
-_common_yaml_path = Path(__file__).absolute().parent.joinpath("common.yml")
 
-
-def _read_common_registers(file: Union[str, PathLike, TextIO]) -> Registers:
-    if isinstance(file, TextIO):
-        return parse_yaml_raw_as(Registers, file.read())
-    else:
-        with open(file) as fileIO:
-            return _read_common_registers(fileIO)
+def _read_common_registers() -> Registers:
+    file = resources.files(__package__) / "common.yml"
+    with file.open("rt") as fileIO:
+        return parse_yaml_raw_as(Registers, fileIO.read())
 
 
 def read_schema(
@@ -21,7 +17,7 @@ def read_schema(
     if isinstance(file, TextIO):
         schema = parse_yaml_raw_as(Model, file.read())
         if not "WhoAmI" in schema.registers and include_common_registers:
-            common = _read_common_registers(_common_yaml_path)
+            common = _read_common_registers()
             schema.registers = dict(common.registers, **schema.registers)
             if schema.bitMasks is not None and common.bitMasks is not None:
                 schema.bitMasks = dict(common.bitMasks, **schema.bitMasks)
