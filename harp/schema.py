@@ -14,7 +14,10 @@ def _read_common_registers() -> Registers:
 def read_schema(
     file: Union[str, PathLike, TextIO], include_common_registers: bool = True
 ) -> Model:
-    if isinstance(file, TextIO):
+    if isinstance(file, (str, PathLike)):
+        with open(file) as fileIO:
+            return read_schema(fileIO)
+    else:
         schema = parse_yaml_raw_as(Model, file.read())
         if not "WhoAmI" in schema.registers and include_common_registers:
             common = _read_common_registers()
@@ -24,6 +27,3 @@ def read_schema(
             if schema.groupMasks is not None and common.groupMasks is not None:
                 schema.groupMasks = dict(common.groupMasks, **schema.groupMasks)
         return schema
-    else:
-        with open(file) as fileIO:
-            return read_schema(fileIO, include_common_registers)
