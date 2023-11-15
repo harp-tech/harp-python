@@ -55,7 +55,7 @@ testdata = [
 
 @mark.parametrize("dataFile", testdata)
 def test_read(dataFile: DataFileParam):
-    context = pytest.raises if dataFile.expected_error is not None else nullcontext
+    context = pytest.raises if dataFile.expected_error else nullcontext
     with context(dataFile.expected_error):  # type: ignore
         data = read(
             dataFile.path,
@@ -68,7 +68,7 @@ def test_read(dataFile: DataFileParam):
         if dataFile.keep_type:
             assert "type" in data.columns and data["type"].dtype == "category"
 
-        if dataFile.expected_cols is not None:
+        if dataFile.expected_cols:
             for col in dataFile.expected_cols:
                 assert col in data.columns
 

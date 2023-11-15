@@ -22,8 +22,16 @@ def read_schema(
         if not "WhoAmI" in schema.registers and include_common_registers:
             common = _read_common_registers()
             schema.registers = dict(common.registers, **schema.registers)
-            if schema.bitMasks is not None and common.bitMasks is not None:
-                schema.bitMasks = dict(common.bitMasks, **schema.bitMasks)
-            if schema.groupMasks is not None and common.groupMasks is not None:
-                schema.groupMasks = dict(common.groupMasks, **schema.groupMasks)
+            if common.bitMasks:
+                schema.bitMasks = (
+                    common.bitMasks
+                    if schema.bitMasks is None
+                    else dict(common.bitMasks, **schema.bitMasks)
+                )
+            if common.groupMasks:
+                schema.groupMasks = (
+                    common.groupMasks
+                    if schema.groupMasks is None
+                    else dict(common.groupMasks, **schema.groupMasks)
+                )
         return schema
