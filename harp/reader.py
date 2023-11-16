@@ -3,10 +3,11 @@ import re
 from math import log2
 from os import PathLike
 from pathlib import Path
+from datetime import datetime
 from functools import partial
 from numpy import dtype
 from pandas import DataFrame, Series
-from typing import Any, BinaryIO, Iterable, Optional, Protocol, Union
+from typing import Any, BinaryIO, Callable, Iterable, Optional, Protocol, Union
 from pandas._typing import Axes
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
 from harp.io import read
@@ -17,7 +18,10 @@ _camel_to_snake_regex = re.compile(r"(?<!^)(?=[A-Z])")
 
 class _ReadRegister(Protocol):
     def __call__(
-        self, file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None
+        self,
+        file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None,
+        epoch: Optional[datetime] = None,
+        keep_type: bool = False,
     ) -> DataFrame:
         ...
 
@@ -50,8 +54,23 @@ class DeviceReader:
         return self.registers[__name]
 
 
-def _compose(f, g):
-    return lambda *a, **kw: f(g(*a, **kw))
+def _compose_parser(
+    f: Callable[[DataFrame], DataFrame], g: Callable[..., DataFrame]
+) -> Callable[..., DataFrame]:
+    def parser(
+        file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None,
+        columns: Optional[Axes] = None,
+        epoch: Optional[datetime] = None,
+        keep_type: bool = False,
+    ):
+        df = g(file, columns, epoch, keep_type)
+        result = f(df)
+        type_col = df.get("type")
+        if type_col is not None:
+            result["type"] = type_col
+        return result
+
+    return parser
 
 
 def _id_camel_to_snake(id: str):
@@ -134,6 +153,8 @@ def _create_register_reader(register: Register, base_path: Path):
     def reader(
         file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None,
         columns: Optional[Axes] = None,
+        epoch: Optional[datetime] = None,
+        keep_type: bool = False,
     ):
         if file is None:
             file = f"{base_path}_{register.address}.bin"
@@ -144,6 +165,8 @@ def _create_register_reader(register: Register, base_path: Path):
             dtype=dtype(register.type),
             length=register.length,
             columns=columns,
+            epoch=epoch,
+            keep_type=keep_type,
         )
         return data
 
@@ -159,13 +182,13 @@ def _create_register_parser(device: Model, name: str, base_path: Path):
         bitMask = None if device.bitMasks is None else device.bitMasks.get(key)
         if bitMask is not None:
             parser = _create_bitmask_parser(bitMask)
-            reader = _compose(parser, reader)
+            reader = _compose_parser(parser, reader)
             return RegisterReader(register, reader)
 
         groupMask = None if device.groupMasks is None else device.groupMasks.get(key)
         if groupMask is not None:
             parser = _create_groupmask_parser(name, groupMask)
-            reader = _compose(parser, reader)
+            reader = _compose_parser(parser, reader)
             return RegisterReader(register, reader)
 
     if register.payloadSpec is not None:
@@ -177,7 +200,7 @@ def _create_register_parser(device: Model, name: str, base_path: Path):
         def parser(df: DataFrame):
             return DataFrame({n: f(df) for n, f in payload_parsers}, index=df.index)
 
-        reader = _compose(parser, reader)
+        reader = _compose_parser(parser, reader)
         return RegisterReader(register, reader)
 
     columns = [_id_camel_to_snake(name)]
