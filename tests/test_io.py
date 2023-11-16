@@ -1,30 +1,9 @@
 import pytest
 import numpy as np
-from os import PathLike
-from typing import Iterable, Optional, Type, Union
 from contextlib import nullcontext
 from pytest import mark
-from pathlib import Path
-from dataclasses import dataclass
 from harp.io import read
-
-datapath = Path(__file__).parent
-
-
-@dataclass
-class DataFileParam:
-    path: Union[str, PathLike]
-    expected_rows: int
-    expected_cols: Optional[Iterable[str]] = None
-    expected_address: Optional[int] = None
-    expected_dtype: Optional[np.dtype] = None
-    expected_length: Optional[int] = None
-    expected_error: Optional[Type[BaseException]] = None
-    keep_type: bool = False
-
-    def __post_init__(self):
-        self.path = datapath / self.path
-
+from tests.params import DataFileParam
 
 testdata = [
     DataFileParam(path="data/device_0.bin", expected_rows=1),
