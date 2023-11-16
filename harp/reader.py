@@ -3,6 +3,7 @@ import re
 from math import log2
 from os import PathLike
 from pathlib import Path
+from datetime import datetime
 from functools import partial
 from numpy import dtype
 from pandas import DataFrame, Series
@@ -17,7 +18,9 @@ _camel_to_snake_regex = re.compile(r"(?<!^)(?=[A-Z])")
 
 class _ReadRegister(Protocol):
     def __call__(
-        self, file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None
+        self,
+        file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None,
+        epoch: Optional[datetime] = None,
     ) -> DataFrame:
         ...
 
@@ -134,6 +137,7 @@ def _create_register_reader(register: Register, base_path: Path):
     def reader(
         file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None,
         columns: Optional[Axes] = None,
+        epoch: Optional[datetime] = None,
     ):
         if file is None:
             file = f"{base_path}_{register.address}.bin"
@@ -144,6 +148,7 @@ def _create_register_reader(register: Register, base_path: Path):
             dtype=dtype(register.type),
             length=register.length,
             columns=columns,
+            epoch=epoch,
         )
         return data
 

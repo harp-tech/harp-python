@@ -12,7 +12,7 @@ testdata = [
         path="data/device.yml",
         expected_whoAmI=0,
         expected_registers=["DigitalInputMode"],
-    )
+    ),
 ]
 
 
