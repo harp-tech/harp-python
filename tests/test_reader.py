@@ -1,5 +1,5 @@
 from pytest import mark
-from harp.schema import read_schema
+from harp.reader import create_reader
 from tests.params import DeviceSchemaParam
 
 testdata = [
@@ -12,6 +12,6 @@ testdata = [
 
 
 @mark.parametrize("schemaFile", testdata)
-def test_read_schema(schemaFile: DeviceSchemaParam):
-    device = read_schema(schemaFile.path)
-    schemaFile.assert_schema(device)
+def test_create_reader(schemaFile: DeviceSchemaParam):
+    reader = create_reader(schemaFile.path)
+    schemaFile.assert_schema(reader.device)
