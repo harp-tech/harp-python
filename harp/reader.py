@@ -191,7 +191,7 @@ def create_reader(
     if isinstance(device, Model):
         base_path = Path(device.device)
     else:
-        path = Path(device)
+        path = Path(device).absolute().resolve()
         is_dir = os.path.isdir(path)
         if is_dir:
             device = path / "device.yml"
