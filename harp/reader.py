@@ -1,10 +1,12 @@
+import os
 import re
 from math import log2
 from os import PathLike
+from pathlib import Path
 from functools import partial
 from numpy import dtype
 from pandas import DataFrame, Series
-from typing import Any, BinaryIO, Iterable, Callable, Optional, Union
+from typing import Any, BinaryIO, Iterable, Optional, Protocol, Union
 from pandas._typing import Axes
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
 from harp.io import read
@@ -13,14 +15,21 @@ from harp.schema import read_schema
 _camel_to_snake_regex = re.compile(r"(?<!^)(?=[A-Z])")
 
 
+class _ReadRegister(Protocol):
+    def __call__(
+        self, file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None
+    ) -> DataFrame:
+        ...
+
+
 class RegisterReader:
     register: Register
-    read: Callable[[Union[str, bytes, PathLike[Any], BinaryIO]], DataFrame]
+    read: _ReadRegister
 
     def __init__(
         self,
         register: Register,
-        read: Callable[[Union[str, bytes, PathLike[Any], BinaryIO]], DataFrame],
+        read: _ReadRegister,
     ) -> None:
         self.register = register
         self.read = read
@@ -111,7 +120,7 @@ def _create_payloadmember_parser(device: Model, member: PayloadMember):
         if member.mask is not None:
             series = series & member.mask
             if shift > 0:
-                series = Series(series.values >> shift, series.index) # type: ignore
+                series = Series(series.values >> shift, series.index)  # type: ignore
         if is_boolean:
             series = series != 0
         elif lookup is not None:
@@ -121,10 +130,14 @@ def _create_payloadmember_parser(device: Model, member: PayloadMember):
     return parser
 
 
-def _create_register_reader(register: Register):
+def _create_register_reader(register: Register, base_path: Path):
     def reader(
-        file: Union[str, bytes, PathLike[Any], BinaryIO], columns: Optional[Axes] = None
+        file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None,
+        columns: Optional[Axes] = None,
     ):
+        if file is None:
+            file = f"{base_path}_{register.address}.bin"
+
         data = read(
             file,
             address=register.address,
@@ -137,9 +150,9 @@ def _create_register_reader(register: Register):
     return reader
 
 
-def _create_register_parser(device: Model, name: str):
+def _create_register_parser(device: Model, name: str, base_path: Path):
     register = device.registers[name]
-    reader = _create_register_reader(register)
+    reader = _create_register_reader(register, base_path)
 
     if register.maskType is not None:
         key = register.maskType.root
@@ -172,9 +185,22 @@ def _create_register_parser(device: Model, name: str):
     return RegisterReader(register, reader)
 
 
-def create_reader(file: Union[str, PathLike], include_common_registers: bool = True):
-    device = read_schema(file, include_common_registers)
+def create_reader(
+    device: Union[str, PathLike, Model], include_common_registers: bool = True
+):
+    if isinstance(device, Model):
+        base_path = Path(device.device)
+    else:
+        path = Path(device).absolute().resolve()
+        is_dir = os.path.isdir(path)
+        if is_dir:
+            device = path / "device.yml"
+
+        device = read_schema(device, include_common_registers)
+        base_path = path / device.device if is_dir else path.parent / device.device
+
     reg_readers = {
-        name: _create_register_parser(device, name) for name in device.registers.keys()
+        name: _create_register_parser(device, name, base_path)
+        for name in device.registers.keys()
     }
     return DeviceReader(device, reg_readers)
