@@ -71,7 +71,3 @@ def test_read(dataFile: DataFileParam):
         if dataFile.expected_cols:
             for col in dataFile.expected_cols:
                 assert col in data.columns
-
-
-if __name__ == "__main__":
-    pytest.main()
