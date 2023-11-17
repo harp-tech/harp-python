@@ -61,7 +61,7 @@ def read(
     data = np.fromfile(file, dtype=np.uint8)
     if len(data) == 0:
         return pd.DataFrame(
-            columns=columns, index=pd.Index([], dtype=np.float64, name="time")
+            columns=columns, index=pd.Index([], dtype=np.float64, name="Time")
         )
 
     if address is not None and address != data[2]:
@@ -86,7 +86,7 @@ def read(
         if epoch is not None:
             time = epoch + pd.to_timedelta(time, "s")  # type: ignore
         index = pd.Series(time)
-        index.name = "time"
+        index.name = "Time"
 
     payloadsize = stride - payloadoffset - 1
     payloadtype = _payloadtypes[payloadtype]
@@ -112,5 +112,5 @@ def read(
             nrows, dtype=np.uint8, buffer=data, offset=0, strides=stride
         )
         msgtype = pd.Categorical.from_codes(msgtype, categories=_messagetypes)  # type: ignore
-        result["type"] = msgtype
+        result[MessageType.__name__] = msgtype
     return result

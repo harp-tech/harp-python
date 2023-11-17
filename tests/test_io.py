@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from contextlib import nullcontext
 from pytest import mark
-from harp.io import read
+from harp.io import read, MessageType
 from tests.params import DataFileParam
 
 testdata = [
@@ -45,7 +45,10 @@ def test_read(dataFile: DataFileParam):
         )
         assert len(data) == dataFile.expected_rows
         if dataFile.keep_type:
-            assert "type" in data.columns and data["type"].dtype == "category"
+            assert (
+                MessageType.__name__ in data.columns
+                and data[MessageType.__name__].dtype == "category"
+            )
 
         if dataFile.expected_cols:
             for col in dataFile.expected_cols:

@@ -1,5 +1,4 @@
 import os
-import re
 from math import log2
 from os import PathLike
 from pathlib import Path
@@ -11,10 +10,8 @@ from pandas import DataFrame, Series
 from typing import Any, BinaryIO, Callable, Iterable, Optional, Protocol, Union
 from pandas._typing import Axes
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
-from harp.io import read
+from harp.io import MessageType, read
 from harp.schema import read_schema
-
-_camel_to_snake_regex = re.compile(r"(?<!^)(?=[A-Z])")
 
 
 @dataclass
@@ -75,16 +72,12 @@ def _compose_parser(
     ):
         df = g(file, columns, epoch, keep_type)
         result = f(df)
-        type_col = df.get("type")
+        type_col = df.get(MessageType.__name__)
         if type_col is not None:
-            result["type"] = type_col
+            result[MessageType.__name__] = type_col
         return result
 
     return parser
-
-
-def _id_camel_to_snake(id: str):
-    return _camel_to_snake_regex.sub("_", id).lower()
 
 
 def _create_bit_parser(mask: int):
@@ -95,10 +88,7 @@ def _create_bit_parser(mask: int):
 
 
 def _create_bitmask_parser(bitMask: BitMask):
-    lookup = [
-        (_id_camel_to_snake(k), _create_bit_parser(int(v.root)))
-        for k, v in bitMask.bits.items()
-    ]
+    lookup = [(k, _create_bit_parser(int(v.root))) for k, v in bitMask.bits.items()]
 
     def parser(df: DataFrame):
         return DataFrame({n: f(df[0]) for n, f in lookup}, index=df.index)
@@ -203,7 +193,7 @@ def _create_register_parser(device: Model, name: str, params: _ReaderParams):
 
     if register.payloadSpec is not None:
         payload_parsers = [
-            (_id_camel_to_snake(key), _create_payloadmember_parser(device, member))
+            (key, _create_payloadmember_parser(device, member))
             for key, member in register.payloadSpec.items()
         ]
 
@@ -213,8 +203,7 @@ def _create_register_parser(device: Model, name: str, params: _ReaderParams):
         reader = _compose_parser(parser, reader, params)
         return RegisterReader(register, reader)
 
-    columns = [_id_camel_to_snake(name)]
-    reader = partial(reader, columns=columns)
+    reader = partial(reader, columns=[name])
     return RegisterReader(register, reader)
 
 
