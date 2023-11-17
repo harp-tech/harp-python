@@ -5,6 +5,7 @@ from os import PathLike
 from pathlib import Path
 from datetime import datetime
 from functools import partial
+from dataclasses import dataclass
 from numpy import dtype
 from pandas import DataFrame, Series
 from typing import Any, BinaryIO, Callable, Iterable, Optional, Protocol, Union
@@ -14,6 +15,13 @@ from harp.io import read
 from harp.schema import read_schema
 
 _camel_to_snake_regex = re.compile(r"(?<!^)(?=[A-Z])")
+
+
+@dataclass
+class _ReaderParams:
+    path: Path
+    epoch: Optional[datetime] = None
+    keep_type: bool = False
 
 
 class _ReadRegister(Protocol):
@@ -55,13 +63,15 @@ class DeviceReader:
 
 
 def _compose_parser(
-    f: Callable[[DataFrame], DataFrame], g: Callable[..., DataFrame]
+    f: Callable[[DataFrame], DataFrame],
+    g: Callable[..., DataFrame],
+    params: _ReaderParams,
 ) -> Callable[..., DataFrame]:
     def parser(
         file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None,
         columns: Optional[Axes] = None,
-        epoch: Optional[datetime] = None,
-        keep_type: bool = False,
+        epoch: Optional[datetime] = params.epoch,
+        keep_type: bool = params.keep_type,
     ):
         df = g(file, columns, epoch, keep_type)
         result = f(df)
@@ -149,15 +159,15 @@ def _create_payloadmember_parser(device: Model, member: PayloadMember):
     return parser
 
 
-def _create_register_reader(register: Register, base_path: Path):
+def _create_register_reader(register: Register, params: _ReaderParams):
     def reader(
         file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None,
         columns: Optional[Axes] = None,
-        epoch: Optional[datetime] = None,
-        keep_type: bool = False,
+        epoch: Optional[datetime] = params.epoch,
+        keep_type: bool = params.keep_type,
     ):
         if file is None:
-            file = f"{base_path}_{register.address}.bin"
+            file = f"{params.path}_{register.address}.bin"
 
         data = read(
             file,
@@ -173,22 +183,22 @@ def _create_register_reader(register: Register, base_path: Path):
     return reader
 
 
-def _create_register_parser(device: Model, name: str, base_path: Path):
+def _create_register_parser(device: Model, name: str, params: _ReaderParams):
     register = device.registers[name]
-    reader = _create_register_reader(register, base_path)
+    reader = _create_register_reader(register, params)
 
     if register.maskType is not None:
         key = register.maskType.root
         bitMask = None if device.bitMasks is None else device.bitMasks.get(key)
         if bitMask is not None:
             parser = _create_bitmask_parser(bitMask)
-            reader = _compose_parser(parser, reader)
+            reader = _compose_parser(parser, reader, params)
             return RegisterReader(register, reader)
 
         groupMask = None if device.groupMasks is None else device.groupMasks.get(key)
         if groupMask is not None:
             parser = _create_groupmask_parser(name, groupMask)
-            reader = _compose_parser(parser, reader)
+            reader = _compose_parser(parser, reader, params)
             return RegisterReader(register, reader)
 
     if register.payloadSpec is not None:
@@ -200,7 +210,7 @@ def _create_register_parser(device: Model, name: str, base_path: Path):
         def parser(df: DataFrame):
             return DataFrame({n: f(df) for n, f in payload_parsers}, index=df.index)
 
-        reader = _compose_parser(parser, reader)
+        reader = _compose_parser(parser, reader, params)
         return RegisterReader(register, reader)
 
     columns = [_id_camel_to_snake(name)]
@@ -209,7 +219,10 @@ def _create_register_parser(device: Model, name: str, base_path: Path):
 
 
 def create_reader(
-    device: Union[str, PathLike, Model], include_common_registers: bool = True
+    device: Union[str, PathLike, Model],
+    include_common_registers: bool = True,
+    epoch: Optional[datetime] = None,
+    keep_type: bool = False,
 ):
     if isinstance(device, Model):
         base_path = Path(device.device)
@@ -223,7 +236,9 @@ def create_reader(
         base_path = path / device.device if is_dir else path.parent / device.device
 
     reg_readers = {
-        name: _create_register_parser(device, name, base_path)
+        name: _create_register_parser(
+            device, name, _ReaderParams(base_path, epoch, keep_type)
+        )
         for name in device.registers.keys()
     }
     return DeviceReader(device, reg_readers)
