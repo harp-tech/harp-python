@@ -14,6 +14,22 @@ def _read_common_registers() -> Registers:
 def read_schema(
     file: Union[str, PathLike, TextIO], include_common_registers: bool = True
 ) -> Model:
+    """Read and parse a device schema from the specified file.
+    
+    Parameters
+    ----------
+    file
+        Open file object or filename containing a YAML text stream describing
+        a device schema.
+    include_common_registers
+        Specifies whether to include the set of Harp common registers in the
+        returned device schema object.
+
+    Returns
+    -------
+        A Pydantic model object representing the Harp device schema.
+    """
+
     if isinstance(file, (str, PathLike)):
         with open(file) as fileIO:
             return read_schema(fileIO)

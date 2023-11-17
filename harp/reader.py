@@ -213,6 +213,30 @@ def create_reader(
     epoch: Optional[datetime] = None,
     keep_type: bool = False,
 ):
+    """Creates a device reader object from the specified dataset or schema.
+    
+    Parameters
+    ----------
+    device
+        A path to the device schema, dataset folder, or parsed device schema object
+        describing the device.
+    include_common_registers
+        Specifies whether to include the set of Harp common registers in the
+        parsed device schema object. If a parsed device schema object is provided,
+        this parameter is ignored.
+    epoch
+        The default reference datetime at which time zero begins. If specified,
+        the data frames returned by each register reader will have a datetime index.
+    keep_type
+        Specifies whether to include a column with the message type by default.
+
+    Returns
+    -------
+        A device reader object which can be used to read binary data for each
+        register or to access metadata about each register. Individual registers
+        can be accessed using dot notation using the name of the register as the
+        key.
+    """
     if isinstance(device, Model):
         base_path = Path(device.device)
     else:

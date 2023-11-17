@@ -6,11 +6,13 @@ from pandas._typing import Axes
 import numpy as np
 import pandas as pd
 
-"""The reference epoch for UTC harp time."""
 REFERENCE_EPOCH = datetime(1904, 1, 1)
+"""The reference epoch for UTC harp time."""
 
 
 class MessageType(IntEnum):
+    """Specifies the type of a Harp message."""
+
     NA = 0
     READ = 1
     WRITE = 2
@@ -41,22 +43,33 @@ def read(
     epoch: Optional[datetime] = None,
     keep_type: bool = False,
 ):
-    """
-    Read single-register Harp data from the specified file.
+    """Read single-register Harp data from the specified file.
 
-    :param file: Open file object or filename containing binary data from
-      a single device register.
-    :param address: Expected register address. If specified, the address of
-      the first message in the file is used for validation.
-    :param dtype: Expected data type of the register payload. If specified, the
-      payload type of the first message in the file is used for validation.
-    :param length: Expected number of elements in register payload. If specified,
-      the payload length of the first message in the file is used for validation.
-    :param columns: The optional column labels to use for the data values.
-    :param epoch: Reference datetime at which time zero begins. If specified,
-      the result data frame will have a datetime index.
-    :param keep_type: Specifies whether to include a column with the message type.
-    :return: A pandas data frame containing message data, sorted by time.
+    Parameters
+    ----------
+    file
+        Open file object or filename containing binary data from
+        a single device register.
+    address
+        Expected register address. If specified, the address of
+        the first message in the file is used for validation.
+    dtype
+        Expected data type of the register payload. If specified, the
+        payload type of the first message in the file is used for validation.
+    length
+        Expected number of elements in register payload. If specified, the
+        payload length of the first message in the file is used for validation.
+    columns
+        The optional column labels to use for the data values.
+    epoch
+        Reference datetime at which time zero begins. If specified,
+        the result data frame will have a datetime index.
+    keep_type
+        Specifies whether to include a column with the message type.
+
+    Returns
+    -------
+        A pandas data frame containing message data, sorted by time.
     """
     data = np.fromfile(file, dtype=np.uint8)
     if len(data) == 0:
