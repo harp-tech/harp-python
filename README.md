@@ -4,39 +4,55 @@ A low-level interface to data collected with the [Harp](https://harp-tech.org/) 
 
 ## Data model 
 
-To regenerate Pydantic data models from device schema definitions, activate a virtual environment with `dev` dependencies, and run:
+The interface makes use of a Pydantic data model generated from Harp device schema definitions. The schema data classes are used to automatically generate binary readers for each device.
+
+All binary data files from a single device need to be stored in the same folder alongside the device meta-schema, named `device.yml`. Each register file should have the following naming convention `<deviceName>_<registerAddress>.bin`.
+
+For example, for a dataset collected with a `Behavior` device, you might have:
 
 ```
-datamodel-codegen --input ./reflex-generator/schema/device.json --output harp/model.py --output-model-type pydantic_v2.BaseModel
+📦device.harp
+ ┣ 📜Behavior_0.bin
+ ┣ 📜Behavior_1.bin
+...
+ ┗ 📜device.yml
 ```
-
-> [!IMPORTANT]
-> Currently code generation adds an unwanted field at the very end of the data model definition `registers: Optional[Any] = None`. This declaration needs to be removed for serialization to work properly.
 
 ## How to use
-
-### Read Harp device schema from YML file
-
-```python
-from harp.schema import read_schema
-schema = read_schema('device.yml')
-```
 
 ### Create device reader object from schema
 
 ```python
-from harp.reader import create_reader
-reader = create_reader(schema)
+import harp
+reader = harp.create_reader("device.harp")
 ```
 
 ### Read data from named register
 
 ```python
-reader.OperationControl.read("data/Behavior_10.bin")
+reader.OperationControl.read()
 ```
 
 ### Access register metadata
 
 ```python
 reader.OperationControl.register.address
+```
+
+### Create device reader object with UTC datetime format
+
+```python
+reader = harp.create_reader("device.harp", epoch=harp.REFERENCE_EPOCH)
+```
+
+### Read data with message type information
+
+```python
+reader.OperationControl.read(keep_type=True)
+```
+
+### Read data from a specific file
+
+```python
+reader.OperationControl.read("data/Behavior_10.bin")
 ```
