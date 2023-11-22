@@ -2,6 +2,18 @@
 
 A low-level interface to data collected with the [Harp](https://harp-tech.org/) binary protocol.
 
+## How to install
+
+The source code is currently hosted on [GitHub](https://github.com/harp-tech/harp-python).
+
+Binary installers for the latest released version are available at the [Python Package Index (PyPI)](https://pypi.org/project/harp-python) and can be installed using `pip`.
+
+```sh
+pip install harp-python
+```
+
+The list of changes between each release can be found [here](https://github.com/harp-tech/harp-python/releases).
+
 ## Data model 
 
 The interface makes use of a Pydantic data model generated from Harp device schema definitions. The schema data classes are used to automatically generate binary readers for each device.
