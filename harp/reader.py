@@ -51,6 +51,7 @@ class DeviceReader:
     def __init__(self, device: Model, registers: dict[str, RegisterReader]) -> None:
         self.device = device
         self.registers = registers
+        self._register_map = {self.registers[key].register.address: key for key in self.registers.keys()}
 
     def __dir__(self) -> Iterable[str]:
         return self.registers.keys()
@@ -58,6 +59,13 @@ class DeviceReader:
     def __getattr__(self, __name: str) -> RegisterReader:
         return self.registers[__name]
 
+    def __getitem__(self, __key: Union[str, int]) -> RegisterReader:
+        if isinstance(__key, int):
+            return self.registers[self._register_map[__key]]
+        elif isinstance(__key, str):
+            return self.registers[__key]
+        else:
+            raise TypeError(f"key must be int or str, not {type(__key)}")
 
 def _compose_parser(
     f: Callable[[DataFrame], DataFrame],
