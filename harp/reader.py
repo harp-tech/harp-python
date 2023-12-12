@@ -72,6 +72,12 @@ class RegisterMap:
     def __str__(self) -> str:
         return str(self.registers)
 
+    def __dir__(self) -> Iterable[str]:
+        return self.registers.keys()
+
+    def __getattr__(self, __name: str) -> RegisterReader:
+        return self.registers[__name]
+
 
 class DeviceReader:
     device: Model
