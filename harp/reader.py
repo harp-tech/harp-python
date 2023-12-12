@@ -44,20 +44,13 @@ class RegisterReader:
         self.read = read
 
 
-class DeviceReader:
-    device: Model
+class RegisterMap:
     registers: dict[str, RegisterReader]
+    _register_map: dict[int, str]
 
-    def __init__(self, device: Model, registers: dict[str, RegisterReader]) -> None:
-        self.device = device
+    def __init__(self, registers: dict[str, RegisterReader]) -> None:
         self.registers = registers
         self._register_map = {self.registers[key].register.address: key for key in self.registers.keys()}
-
-    def __dir__(self) -> Iterable[str]:
-        return self.registers.keys()
-
-    def __getattr__(self, __name: str) -> RegisterReader:
-        return self.registers[__name]
 
     def __getitem__(self, __key: Union[str, int]) -> RegisterReader:
         if isinstance(__key, int):
@@ -66,6 +59,39 @@ class DeviceReader:
             return self.registers[__key]
         else:
             raise TypeError(f"key must be int or str, not {type(__key)}")
+
+    def __iter__(self) -> Iterable[str]:
+        return iter(self.registers)
+
+    def __len__(self) -> int:
+        return len(self.registers)
+
+    def __repr__(self) -> str:
+        return repr(self.registers)
+
+    def __str__(self) -> str:
+        return str(self.registers)
+
+
+class DeviceReader:
+    device: Model
+    registers: RegisterMap
+
+    def __init__(self, device: Model, registers: Union[RegisterMap, dict[str, RegisterReader]]) -> None:
+        self.device = device
+        if isinstance(registers, RegisterMap):
+            self.registers = registers.registers
+        elif isinstance(registers, dict):
+            self.registers = RegisterMap(registers)
+        else:
+            raise TypeError(f"registers must be dict or RegisterMap, not {type(registers)}")
+
+    def __dir__(self) -> Iterable[str]:
+        return self.registers.keys()
+
+    def __getattr__(self, __name: str) -> RegisterReader:
+        return self.registers[__name]
+
 
 def _compose_parser(
     f: Callable[[DataFrame], DataFrame],
