@@ -73,7 +73,7 @@ class DeviceReader:
     def __init__(self, device: Model, registers: Union[RegisterMap, dict[str, RegisterReader]]) -> None:
         self.device = device
         if isinstance(registers, RegisterMap):
-            self.registers = registers.registers
+            self.registers = registers
         elif isinstance(registers, dict):
             self.registers = RegisterMap(registers)
         else:
