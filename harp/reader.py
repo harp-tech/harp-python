@@ -50,13 +50,13 @@ class RegisterMap(UserDict[str, RegisterReader]):
 
     def __init__(self, registers: dict[str, RegisterReader]) -> None:
         super().__init__(registers)
-        self._register_map = {self[key].registers.address: key for key in self.keys()}
+        self._address_map = {self[key].register.address: key for key in self.keys()}
 
     def __getitem__(self, __key: Union[str, int]) -> RegisterReader:
         if isinstance(__key, int):
-            return self[self._register_map[__key]]
+            return self[self._address_map[__key]]
         elif isinstance(__key, str):
-            return self[__key]
+            return super().__getitem__(__key)
         else:
             raise TypeError(f"key must be int or str, not {type(__key)}")
 
