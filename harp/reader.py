@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from numpy import dtype
 from pandas import DataFrame, Series
 from typing import Any, BinaryIO, Callable, Iterable, Optional, Protocol, Union
+from collections import UserDict
 from pandas._typing import Axes
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
 from harp.io import MessageType, read
@@ -44,39 +45,25 @@ class RegisterReader:
         self.read = read
 
 
-class RegisterMap:
-    registers: dict[str, RegisterReader]
-    _register_map: dict[int, str]
+class RegisterMap(UserDict[str, RegisterReader]):
+    _name_map: dict[str, RegisterReader]
+    _address_map: dict[int, str]
 
     def __init__(self, registers: dict[str, RegisterReader]) -> None:
-        self.registers = registers
-        self._register_map = {self.registers[key].register.address: key for key in self.registers.keys()}
+        super().__init__(registers)
+        self._name_map = registers
+        self._register_map = {self._name_map[key].registers.address: key for key in self._name_map.keys()}
 
     def __getitem__(self, __key: Union[str, int]) -> RegisterReader:
         if isinstance(__key, int):
-            return self.registers[self._register_map[__key]]
+            return self._name_map[self._register_map[__key]]
         elif isinstance(__key, str):
-            return self.registers[__key]
+            return self._name_map[__key]
         else:
             raise TypeError(f"key must be int or str, not {type(__key)}")
 
-    def __iter__(self) -> Iterable[str]:
-        return iter(self.registers)
-
-    def __len__(self) -> int:
-        return len(self.registers)
-
-    def __repr__(self) -> str:
-        return repr(self.registers)
-
-    def __str__(self) -> str:
-        return str(self.registers)
-
-    def __dir__(self) -> Iterable[str]:
-        return self.registers.keys()
-
     def __getattr__(self, __name: str) -> RegisterReader:
-        return self.registers[__name]
+        return self._name_map[__name]
 
 
 class DeviceReader:
