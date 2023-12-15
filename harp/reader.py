@@ -46,24 +46,22 @@ class RegisterReader:
 
 
 class RegisterMap(UserDict[str, RegisterReader]):
-    _name_map: dict[str, RegisterReader]
     _address_map: dict[int, str]
 
     def __init__(self, registers: dict[str, RegisterReader]) -> None:
         super().__init__(registers)
-        self._name_map = registers
-        self._register_map = {self._name_map[key].registers.address: key for key in self._name_map.keys()}
+        self._register_map = {self[key].registers.address: key for key in self.keys()}
 
     def __getitem__(self, __key: Union[str, int]) -> RegisterReader:
         if isinstance(__key, int):
-            return self._name_map[self._register_map[__key]]
+            return self[self._register_map[__key]]
         elif isinstance(__key, str):
-            return self._name_map[__key]
+            return self[__key]
         else:
             raise TypeError(f"key must be int or str, not {type(__key)}")
 
     def __getattr__(self, __name: str) -> RegisterReader:
-        return self._name_map[__name]
+        return self[__name]
 
 
 class DeviceReader:
