@@ -67,10 +67,8 @@ class DeviceReader:
         self.device = device
         if isinstance(registers, RegisterMap):
             self.registers = registers
-        elif isinstance(registers, dict):
-            self.registers = RegisterMap(registers)
         else:
-            raise TypeError(f"registers must be dict or RegisterMap, not {type(registers)}")
+            self.registers = RegisterMap(registers)
 
     def __dir__(self) -> Iterable[str]:
         return self.registers.keys()
