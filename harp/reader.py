@@ -54,14 +54,9 @@ class RegisterMap(UserDict[str, RegisterReader]):
 
     def __getitem__(self, __key: Union[str, int]) -> RegisterReader:
         if isinstance(__key, int):
-            super().__getitem__(self._address_map[__key])
-        elif isinstance(__key, str):
-            return super().__getitem__(__key)
+            return self._address_map[__key]
         else:
-            raise TypeError(f"key must be int or str, not {type(__key)}")
-
-    def __getattr__(self, __name: str) -> RegisterReader:
-        return self[__name]
+            return super().__getitem__(__key)
 
 
 class DeviceReader:
