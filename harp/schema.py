@@ -15,7 +15,7 @@ def read_schema(
     file: Union[str, PathLike, TextIO], include_common_registers: bool = True
 ) -> Model:
     """Read and parse a device schema from the specified file.
-    
+
     Parameters
     ----------
     file

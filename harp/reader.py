@@ -214,7 +214,7 @@ def create_reader(
     keep_type: bool = False,
 ):
     """Creates a device reader object from the specified dataset or schema.
-    
+
     Parameters
     ----------
     device
