@@ -50,7 +50,9 @@ class RegisterMap(UserDict[str, RegisterReader]):
 
     def __init__(self, registers: dict[str, RegisterReader]) -> None:
         super().__init__(registers)
-        self._address_map = {value.register.address: value for value in registers.values()}
+        self._address_map = {
+            value.register.address: value for value in registers.values()
+        }
 
     def __getitem__(self, __key: Union[str, int]) -> RegisterReader:
         if isinstance(__key, int):
@@ -63,7 +65,9 @@ class DeviceReader:
     device: Model
     registers: RegisterMap
 
-    def __init__(self, device: Model, registers: Union[RegisterMap, dict[str, RegisterReader]]) -> None:
+    def __init__(
+        self, device: Model, registers: Union[RegisterMap, dict[str, RegisterReader]]
+    ) -> None:
         self.device = device
         if isinstance(registers, RegisterMap):
             self.registers = registers
