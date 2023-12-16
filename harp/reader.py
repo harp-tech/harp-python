@@ -66,13 +66,10 @@ class DeviceReader:
     registers: RegisterMap
 
     def __init__(
-        self, device: Model, registers: Union[RegisterMap, dict[str, RegisterReader]]
+        self, device: Model, registers: dict[str, RegisterReader]
     ) -> None:
         self.device = device
-        if isinstance(registers, RegisterMap):
-            self.registers = registers
-        else:
-            self.registers = RegisterMap(registers)
+        self.registers = RegisterMap(registers)
 
     def __dir__(self) -> Iterable[str]:
         return self.registers.keys()
