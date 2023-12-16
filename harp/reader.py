@@ -46,7 +46,7 @@ class RegisterReader:
 
 
 class RegisterMap(UserDict[str, RegisterReader]):
-    _address_map: dict[int, str]
+    _address_map: dict[int, RegisterReader]
 
     def __init__(self, registers: dict[str, RegisterReader]) -> None:
         super().__init__(registers)
