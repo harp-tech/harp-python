@@ -7,7 +7,7 @@ from functools import partial
 from dataclasses import dataclass
 from numpy import dtype
 from pandas import DataFrame, Series
-from typing import Any, BinaryIO, Callable, Iterable, Optional, Protocol, Union, Mapping
+from typing import Any, BinaryIO, Callable, Iterable, Mapping, Optional, Protocol, Union
 from collections import UserDict
 from pandas._typing import Axes
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
