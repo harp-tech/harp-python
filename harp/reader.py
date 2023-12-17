@@ -7,7 +7,8 @@ from functools import partial
 from dataclasses import dataclass
 from numpy import dtype
 from pandas import DataFrame, Series
-from typing import Any, BinaryIO, Callable, Iterable, Optional, Protocol, Union
+from typing import Any, BinaryIO, Callable, Iterable, Mapping, Optional, Protocol, Union
+from collections import UserDict
 from pandas._typing import Axes
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
 from harp.io import MessageType, read
@@ -44,13 +45,29 @@ class RegisterReader:
         self.read = read
 
 
+class RegisterMap(UserDict[str, RegisterReader]):
+    _address_map: Mapping[int, RegisterReader]
+
+    def __init__(self, registers: Mapping[str, RegisterReader]) -> None:
+        super().__init__(registers)
+        self._address_map = {
+            value.register.address: value for value in registers.values()
+        }
+
+    def __getitem__(self, __key: Union[str, int]) -> RegisterReader:
+        if isinstance(__key, int):
+            return self._address_map[__key]
+        else:
+            return super().__getitem__(__key)
+
+
 class DeviceReader:
     device: Model
-    registers: dict[str, RegisterReader]
+    registers: RegisterMap
 
-    def __init__(self, device: Model, registers: dict[str, RegisterReader]) -> None:
+    def __init__(self, device: Model, registers: Mapping[str, RegisterReader]) -> None:
         self.device = device
-        self.registers = registers
+        self.registers = RegisterMap(registers)
 
     def __dir__(self) -> Iterable[str]:
         return self.registers.keys()
