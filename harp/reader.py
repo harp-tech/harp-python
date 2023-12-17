@@ -65,9 +65,7 @@ class DeviceReader:
     device: Model
     registers: RegisterMap
 
-    def __init__(
-        self, device: Model, registers: Mapping[str, RegisterReader]
-    ) -> None:
+    def __init__(self, device: Model, registers: Mapping[str, RegisterReader]) -> None:
         self.device = device
         self.registers = RegisterMap(registers)
 
