@@ -7,7 +7,7 @@ from functools import partial
 from dataclasses import dataclass
 from numpy import dtype
 from pandas import DataFrame, Series
-from typing import Any, BinaryIO, Callable, Iterable, Optional, Protocol, Union
+from typing import Any, BinaryIO, Callable, Iterable, Optional, Protocol, Union, Mapping
 from collections import UserDict
 from pandas._typing import Axes
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
@@ -46,9 +46,9 @@ class RegisterReader:
 
 
 class RegisterMap(UserDict[str, RegisterReader]):
-    _address_map: dict[int, RegisterReader]
+    _address_map: Mapping[int, RegisterReader]
 
-    def __init__(self, registers: dict[str, RegisterReader]) -> None:
+    def __init__(self, registers: Mapping[str, RegisterReader]) -> None:
         super().__init__(registers)
         self._address_map = {
             value.register.address: value for value in registers.values()
@@ -66,7 +66,7 @@ class DeviceReader:
     registers: RegisterMap
 
     def __init__(
-        self, device: Model, registers: dict[str, RegisterReader]
+        self, device: Model, registers: Mapping[str, RegisterReader]
     ) -> None:
         self.device = device
         self.registers = RegisterMap(registers)
