@@ -28,8 +28,7 @@ class _ReadRegister(Protocol):
         file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None,
         epoch: Optional[datetime] = None,
         keep_type: bool = False,
-    ) -> DataFrame:
-        ...
+    ) -> DataFrame: ...
 
 
 class RegisterReader:
