@@ -2,6 +2,60 @@ import numpy as np
 import warnings
 
 
+def align_timestamps_to_harp_clock(timestamps_to_align, start_times, harp_times):
+    """
+    Aligns a set of timestamps or sample numbers to the Harp clock
+
+    `decode_harp_clock` must be run first, in order to find the
+    start of each second in the Harp clock.
+
+    Parameters
+    ----------
+    timestamps_to_align : np.array
+        Timestamps or sample numbers to align to the Harp clock
+    start_times : np.array
+        Start times of each second in the Harp clock
+    harp_times : np.array
+        Harp clock times in seconds
+
+    Returns
+    -------
+    aligned_times : np.array
+        Aligned timestamps or sample numbers
+    """
+
+    if len(start_times) != len(harp_times):
+        raise ValueError(
+            "The number of start times must equal the number of Harp times"
+        )
+
+    N = len(start_times)
+
+    slopes = np.zeros((N + 1,))
+    offsets = np.zeros((N + 1,))
+
+    # compute overall slope and offset
+    A = np.vstack([start_times, np.ones(len(start_times))]).T
+    slopes[0], offsets[0] = np.linalg.lstsq(A, harp_times, rcond=None)[0]
+
+    # compute slope and offset for each segment
+    for i in range(N):
+        x = start_times[i : i + 2]
+        y = harp_times[i : i + 2]
+        A = np.vstack([x, np.ones(len(x))]).T
+        slopes[i + 1], offsets[i + 1] = np.linalg.lstsq(A, y, rcond=None)[0]
+
+    # find the nearest anchor point for each timestamp to align
+    nearest = np.searchsorted(start_times, timestamps_to_align, side="left")
+
+    nearest[nearest == N] = 0
+
+    # interpolate between the anchor points
+    aligned_times = timestamps_to_align * slopes[nearest] + offsets[nearest]
+
+    return aligned_times
+
+
 def decode_harp_clock(
     timestamps_or_sample_numbers, states, sample_rate=1, baud_rate=1000.0
 ):
