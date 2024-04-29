@@ -63,9 +63,7 @@ def align_timestamps_to_harp_clock(timestamps_to_align, start_times, harp_times)
     return aligned_times
 
 
-def decode_harp_clock(
-    timestamps, states, baud_rate=1000.0
-):
+def decode_harp_clock(timestamps, states, baud_rate=1000.0):
     """
     Decodes Harp clock times (in seconds) from a sequence of local
     event timestamps and states.
@@ -113,23 +111,26 @@ def decode_harp_clock(
     """
 
     min_delta = 0.5  # seconds -- Harp clock events must always be
-                     # at least this far apart   
+    # at least this far apart
 
     barcode_edges = get_barcode_edges(timestamps, min_delta)
 
     start_times = np.array([timestamps[edges[0]] for edges in barcode_edges])
 
-    harp_times = np.array([
-        convert_barcode(
-            timestamps[edges[0] : edges[1]],
-            states[edges[0] : edges[1]],
-            baud_rate=baud_rate,
-        )
-        for edges in barcode_edges
-    ])
+    harp_times = np.array(
+        [
+            convert_barcode(
+                timestamps[edges[0] : edges[1]],
+                states[edges[0] : edges[1]],
+                baud_rate=baud_rate,
+            )
+            for edges in barcode_edges
+        ]
+    )
 
-    start_times_corrected, harp_times_corrected = \
-        remove_outliers(start_times, harp_times)
+    start_times_corrected, harp_times_corrected = remove_outliers(
+        start_times, harp_times
+    )
 
     return start_times_corrected, harp_times_corrected
 
@@ -201,7 +202,7 @@ def remove_outliers(start_times, harp_times):
     These outliers are caused by problems decoding
     the Harp clock signal, leading to consecutive times that
     do not increase by exactly 1. These will be removed from
-    the array of Harp times, so they will not be used 
+    the array of Harp times, so they will not be used
     as anchor points during subsequent clock alignment.
 
     If the times jump to a new value and continue to
@@ -226,17 +227,21 @@ def remove_outliers(start_times, harp_times):
     original_indices = np.arange(len(harp_times))
 
     new_indices = np.concatenate(
-        [sub_array for sub_array
-         in np.split(original_indices,
-          np.where(np.diff(harp_times) != 1)[0]+1)
-         if len(sub_array) > 1])
-    
+        [
+            sub_array
+            for sub_array in np.split(
+                original_indices, np.where(np.diff(harp_times) != 1)[0] + 1
+            )
+            if len(sub_array) > 1
+        ]
+    )
+
     num_outliers = len(original_indices) - len(new_indices)
 
     if num_outliers > 0:
         warnings.warn(
-            f"{num_outliers} outlier{'s' if num_outliers > 1 else ''} " +
-            "found in the decoded Harp clock. Removing..."
+            f"{num_outliers} outlier{'s' if num_outliers > 1 else ''} "
+            + "found in the decoded Harp clock. Removing..."
         )
 
     return start_times[new_indices], harp_times[new_indices]
