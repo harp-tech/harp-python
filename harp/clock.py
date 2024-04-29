@@ -4,7 +4,12 @@ import warnings
 
 def align_timestamps_to_harp_clock(timestamps_to_align, start_times, harp_times):
     """
-    Aligns a set of timestamps or sample numbers to the Harp clock
+    Aligns a set of timestamps to the Harp clock.
+
+    We assume these timestamps are acquired by a system that is
+    not aligned to the Harp clock. This function finds the nearest
+    anchor point in the Harp clock for each timestamp, and then
+    interpolates between the anchor points to align the timestamps.
 
     `decode_harp_clock` must be run first, in order to find the
     start of each second in the Harp clock.
@@ -12,11 +17,13 @@ def align_timestamps_to_harp_clock(timestamps_to_align, start_times, harp_times)
     Parameters
     ----------
     timestamps_to_align : np.array
-        Timestamps or sample numbers to align to the Harp clock
+        Local timestamps (in seconds) to align to the Harp clock
     start_times : np.array
-        Start times of each second in the Harp clock
+        Local start times of each second in the Harp clock
+        (output by `decode_harp_clock`)
     harp_times : np.array
         Harp clock times in seconds
+        (output by `decode_harp_clock`)
 
     Returns
     -------
@@ -57,11 +64,11 @@ def align_timestamps_to_harp_clock(timestamps_to_align, start_times, harp_times)
 
 
 def decode_harp_clock(
-    timestamps_or_sample_numbers, states, sample_rate=1, baud_rate=1000.0
+    timestamps, states, baud_rate=1000.0
 ):
     """
-    Decodes Harp clock times (in seconds) from a sequence of sample
-    numbers and states.
+    Decodes Harp clock times (in seconds) from a sequence of local
+    event timestamps and states.
 
     The Harp Behavior board can be configured to output a digital
     signal that encodes the current Harp time as a 32-bit integer,
@@ -88,53 +95,54 @@ def decode_harp_clock(
 
     Parameters
     ----------
-    timestamps_or_sample_numbers : np.array
-        Float times in seconds or integer sample numbers
-        for each clock line transition
+    timestamps : np.array
+        Float times in seconds for each clock line transition
+        If the acquisition system outputs integer sample numbers
+        for each event, divide by the sample rate to convert to seconds
     states : np.array
         States (1 or 0) for each clock line transition
-    sample_rate : float
-        The sample rate at which the clock signal was acquired
-        When inputting timestamps in seconds, use a sample rate of 1
     baud_rate : float
-        The baud rate of the clock signal
+        The baud rate of the Harp clock signal
 
     Returns
     -------
-    starts : np.array
-        Sample numbers or timestamps at which each second begins
+    start_times : np.array
+        Timestamps at which each second begins
     harp_times : np.array
         Harp clock times in seconds
     """
 
-    min_delta = sample_rate / 2  # 0.5 seconds
+    min_delta = 0.5  # seconds -- Harp clock events must always be
+                     # at least this far apart   
 
-    barcode_edges = get_barcode_edges(timestamps_or_sample_numbers, min_delta)
+    barcode_edges = get_barcode_edges(timestamps, min_delta)
 
-    start_samples = [timestamps_or_sample_numbers[edges[0]] for edges in barcode_edges]
+    start_times = np.array([timestamps[edges[0]] for edges in barcode_edges])
 
-    harp_times = [
+    harp_times = np.array([
         convert_barcode(
-            timestamps_or_sample_numbers[edges[0] : edges[1]] / sample_rate,
+            timestamps[edges[0] : edges[1]],
             states[edges[0] : edges[1]],
             baud_rate=baud_rate,
         )
         for edges in barcode_edges
-    ]
+    ])
 
-    harp_times_corrected = correct_outliers(np.array(harp_times))
+    start_times_corrected, harp_times_corrected = \
+        remove_outliers(start_times, harp_times)
 
-    return np.array(start_samples), harp_times_corrected
+    return start_times_corrected, harp_times_corrected
 
 
-def get_barcode_edges(sample_numbers, min_delta):
+def get_barcode_edges(timestamps, min_delta):
     """
     Returns the start and end indices of each barcode
 
     Parameters
     ----------
-    sample_numbers : np.array
-        Sample numbers of clock line (high and low states)
+    timestamps : np.array
+        Timestamps (ins seconds) of clock line events
+        (high and low states)
     min_delta : int
         The minimum length between the end of one
         barcode and the start of the next
@@ -145,7 +153,7 @@ def get_barcode_edges(sample_numbers, min_delta):
         Contains the start and end indices of each barcode
     """
 
-    (splits,) = np.where(np.diff(sample_numbers) > min_delta)
+    (splits,) = np.where(np.diff(timestamps) > min_delta)
 
     return list(zip(splits[:-1] + 1, splits[1:] + 1))
 
@@ -186,35 +194,49 @@ def convert_barcode(transition_times, states, baud_rate):
     return harp_time
 
 
-def correct_outliers(harp_times):
+def remove_outliers(start_samples, harp_times):
     """
-    Corrects outliers in the Harp clock times
+    Removes outliers from the Harp clock times
+
+    These outliers are caused by problems decoding
+    the Harp clock signal, leading to consecutive times that
+    do not increase by exactly 1. These will be removed from
+    the array of Harp times, so they will not be used 
+    as anchor points during subsequent clock alignment.
+
+    If the times jump to a new value and continue to
+    increase by 1, either due to a reset of the Harp clock
+    or a gap in the data, these will be ignored.
 
     Parameters
     ----------
+    start_samples : np.array
+        Harp clock start times in seconds
     harp_times : np.array
         Harp clock times in seconds
 
     Returns
     -------
+    corrected_start_samples : np.array
+        Corrected Harp clock times in seconds
     corrected_harp_times : np.array
         Corrected Harp clock times in seconds
     """
 
-    diffs = np.abs(np.diff(harp_times))
+    original_indices = np.arange(len(harp_times))
 
-    # Find the indices of the outliers
-    outliers = np.where(diffs > 1)[0]
+    new_indices = np.concatenate(
+        [sub_array for sub_array
+         in np.split(original_indices,
+          np.where(np.diff(harp_times) != 1)[0]+1)
+         if len(sub_array) > 1])
+    
+    num_outliers = len(original_indices) - len(new_indices)
 
-    if len(outliers) == 1:
-        warnings.warn("One outlier found in the decoded Harp clock. Correcting...")
-    elif len(outliers) > 1:
+    if num_outliers > 0:
         warnings.warn(
-            f"{len(outliers)} outliers found in the decoded Harp clock. Correcting..."
+            f"{num_outliers} outlier{'s' if num_outliers > 1 else ''} " +
+            "found in the decoded Harp clock. Removing..."
         )
 
-    # Correct the outliers
-    for outlier in outliers:
-        harp_times[outlier + 1] = harp_times[outlier] + 1
-
-    return harp_times
+    return start_samples[new_indices], harp_times[new_indices]
