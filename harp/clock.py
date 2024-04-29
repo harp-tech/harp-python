@@ -28,7 +28,7 @@ def align_timestamps_to_harp_clock(timestamps_to_align, start_times, harp_times)
     Returns
     -------
     aligned_times : np.array
-        Aligned timestamps or sample numbers
+        Aligned timestamps
     """
 
     if len(start_times) != len(harp_times):
@@ -194,7 +194,7 @@ def convert_barcode(transition_times, states, baud_rate):
     return harp_time
 
 
-def remove_outliers(start_samples, harp_times):
+def remove_outliers(start_times, harp_times):
     """
     Removes outliers from the Harp clock times
 
@@ -210,14 +210,14 @@ def remove_outliers(start_samples, harp_times):
 
     Parameters
     ----------
-    start_samples : np.array
+    start_times : np.array
         Harp clock start times in seconds
     harp_times : np.array
         Harp clock times in seconds
 
     Returns
     -------
-    corrected_start_samples : np.array
+    corrected_start_times : np.array
         Corrected Harp clock times in seconds
     corrected_harp_times : np.array
         Corrected Harp clock times in seconds
@@ -239,4 +239,4 @@ def remove_outliers(start_samples, harp_times):
             "found in the decoded Harp clock. Removing..."
         )
 
-    return start_samples[new_indices], harp_times[new_indices]
+    return start_times[new_indices], harp_times[new_indices]
