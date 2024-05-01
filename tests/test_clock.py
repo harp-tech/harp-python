@@ -1,6 +1,6 @@
 import numpy as np
 from pytest import mark
-from harp.clock import decode_harp_clock, align_timestamps_to_harp_clock
+from harp.clock import decode_harp_clock, align_timestamps_to_anchor_points
 import warnings
 
 # fmt: off
@@ -78,10 +78,10 @@ def test_create_reader(test_input):
 
     # test alignment for samples 1/2 second after anchors
     ts = start_times + 0.5
-    aligned_times = align_timestamps_to_harp_clock(ts, start_times, harp_times)
+    aligned_times = align_timestamps_to_anchor_points(ts, start_times, harp_times)
     assert np.allclose(aligned_times, harp_times + 0.5)
 
     # test alignment for samples 1/2 second before anchors
     ts = start_times - 0.5
-    aligned_times = align_timestamps_to_harp_clock(ts, start_times, harp_times)
+    aligned_times = align_timestamps_to_anchor_points(ts, start_times, harp_times)
     assert np.allclose(aligned_times, harp_times - 0.5)

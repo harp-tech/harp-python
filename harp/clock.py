@@ -2,9 +2,9 @@ import numpy as np
 import warnings
 
 
-def align_timestamps_to_harp_clock(timestamps_to_align, start_times, harp_times):
+def align_timestamps_to_anchor_points(timestamps_to_align, start_times, anchor_times):
     """
-    Aligns a set of timestamps to the Harp clock.
+    Aligns a set of timestamps to anchor points (e.g., Harp clock times)
 
     We assume these timestamps are acquired by a system that is
     not aligned to the Harp clock. This function finds the nearest
@@ -21,8 +21,9 @@ def align_timestamps_to_harp_clock(timestamps_to_align, start_times, harp_times)
     start_times : np.array
         Local start times of each second in the Harp clock
         (output by `decode_harp_clock`)
-    harp_times : np.array
-        Harp clock times in seconds
+    anchor_times : np.array
+        Global clock times in seconds (typically the Harp clock times,
+        but can be any set of anchor points to align to)
         (output by `decode_harp_clock`)
 
     Returns
@@ -31,7 +32,7 @@ def align_timestamps_to_harp_clock(timestamps_to_align, start_times, harp_times)
         Aligned timestamps
     """
 
-    if len(start_times) != len(harp_times):
+    if len(start_times) != len(anchor_times):
         raise ValueError(
             "The number of start times must equal the number of Harp times"
         )
@@ -43,12 +44,12 @@ def align_timestamps_to_harp_clock(timestamps_to_align, start_times, harp_times)
 
     # compute overall slope and offset
     A = np.vstack([start_times, np.ones(len(start_times))]).T
-    slopes[0], offsets[0] = np.linalg.lstsq(A, harp_times, rcond=None)[0]
+    slopes[0], offsets[0] = np.linalg.lstsq(A, anchor_times, rcond=None)[0]
 
     # compute slope and offset for each segment
     for i in range(N):
         x = start_times[i : i + 2]
-        y = harp_times[i : i + 2]
+        y = anchor_times[i : i + 2]
         A = np.vstack([x, np.ones(len(x))]).T
         slopes[i + 1], offsets[i + 1] = np.linalg.lstsq(A, y, rcond=None)[0]
 
