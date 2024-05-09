@@ -13,6 +13,7 @@ from pandas._typing import Axes
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
 from harp.io import MessageType, read
 from harp.schema import read_schema
+import requests
 
 
 @dataclass
@@ -74,6 +75,117 @@ class DeviceReader:
 
     def __getattr__(self, __name: str) -> RegisterReader:
         return self.registers[__name]
+
+    @staticmethod
+    def from_file(
+            filepath: PathLike,
+            base_path: Optional[PathLike] = None,
+            include_common_registers: bool = True,
+            epoch: Optional[datetime] = None,
+            keep_type: bool = False) -> "DeviceReader":
+
+        device = read_schema(filepath, include_common_registers)
+        if base_path is None:
+            path = Path(filepath).absolute().resolve()
+            base_path = path.parent / device.device
+        else:
+            base_path = Path(base_path).absolute().resolve() / device.device
+
+        reg_readers = {
+            name: _create_register_parser(
+                device, name, _ReaderParams(base_path, epoch, keep_type)
+            )
+            for name in device.registers.keys()
+        }
+        return DeviceReader(device, reg_readers)
+
+    @staticmethod
+    def from_url(
+            url: str,
+            base_path: Optional[PathLike] = None,
+            include_common_registers: bool = True,
+            epoch: Optional[datetime] = None,
+            keep_type: bool = False,
+            timeout: int = 5) -> "DeviceReader":
+
+        response = requests.get(url, timeout=timeout)
+        text = response.text
+
+        device = read_schema(text, include_common_registers)
+        if base_path is None:
+            base_path = Path(device.device).absolute().resolve()
+        else:
+            base_path = Path(base_path).absolute().resolve()
+
+        reg_readers = {
+            name: _create_register_parser(
+                device, name, _ReaderParams(base_path, epoch, keep_type)
+            )
+            for name in device.registers.keys()
+        }
+        return DeviceReader(device, reg_readers)
+
+    @staticmethod
+    def from_str(
+            schema: str,
+            base_path: Optional[PathLike] = None,
+            include_common_registers: bool = True,
+            epoch: Optional[datetime] = None,
+            keep_type: bool = False) -> "DeviceReader":
+
+        device = read_schema(schema, include_common_registers)
+        if base_path is None:
+            base_path = Path(device.device).absolute().resolve()
+        else:
+            base_path = Path(base_path).absolute().resolve()
+
+        reg_readers = {
+            name: _create_register_parser(
+                device, name, _ReaderParams(base_path, epoch, keep_type)
+            )
+            for name in device.registers.keys()
+        }
+        return DeviceReader(device, reg_readers)
+
+    @staticmethod
+    def from_model(
+            model: Model,
+            base_path: Optional[PathLike] = None,
+            epoch: Optional[datetime] = None,
+            keep_type: bool = False) -> "DeviceReader":
+
+        if base_path is None:
+            base_path = Path(model.device).absolute().resolve()
+        else:
+            base_path = Path(base_path).absolute().resolve()
+
+        reg_readers = {
+            name: _create_register_parser(
+                model, name, _ReaderParams(base_path, epoch, keep_type)
+            )
+            for name in model.registers.keys()
+        }
+        return DeviceReader(model, reg_readers)
+
+    @staticmethod
+    def from_dataset(
+            dataset: PathLike,
+            include_common_registers: bool = True,
+            epoch: Optional[datetime] = None,
+            keep_type: bool = False) -> "DeviceReader":
+
+        path = Path(dataset).absolute().resolve()
+        is_dir = os.path.isdir(path)
+        if is_dir:
+            filepath = path / "device.yml"
+            return DeviceReader.from_file(
+                filepath=filepath,
+                base_path=path,
+                include_common_registers=include_common_registers,
+                epoch=epoch,
+                keep_type=keep_type)
+        else:
+            raise ValueError("The dataset must be a directory containing a device.yml file.")
 
 
 def _compose_parser(
