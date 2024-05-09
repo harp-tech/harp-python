@@ -306,9 +306,12 @@ class DeviceReader:
                 base_path=path,
                 include_common_registers=include_common_registers,
                 epoch=epoch,
-                keep_type=keep_type)
+                keep_type=keep_type,
+            )
         else:
-            raise ValueError("The dataset must be a directory containing a device.yml file.")
+            raise ValueError(
+                "The dataset must be a directory containing a device.yml file."
+            )
 
 
 def _compose_parser(
@@ -458,7 +461,10 @@ def _create_register_parser(device: Model, name: str, params: _ReaderParams):
     reader = partial(reader, columns=[name])
     return RegisterReader(register, reader)
 
-@deprecated("This function is deprecated. Use DeviceReader.from_file, DeviceReader.from_url, DeviceReader.from_str, and DeviceReader.from_model instead.")
+
+@deprecated(
+    "This function is deprecated. Use DeviceReader.from_file, DeviceReader.from_url, DeviceReader.from_str, and DeviceReader.from_model instead."
+)
 def create_reader(
     device: Union[str, PathLike, Model],
     include_common_registers: bool = True,
