@@ -1,20 +1,23 @@
 import os
-import requests
-from deprecated import deprecated
+from collections import UserDict
+from dataclasses import dataclass
+from datetime import datetime
+from functools import partial
 from math import log2
 from os import PathLike
 from pathlib import Path
-from datetime import datetime
-from functools import partial
-from dataclasses import dataclass
+from typing import (Any, BinaryIO, Callable, Iterable, Mapping, Optional,
+                    Protocol, Union)
+
+import requests
+from deprecated import deprecated
 from numpy import dtype
 from pandas import DataFrame, Series
-from typing import Any, BinaryIO, Callable, Iterable, Mapping, Optional, Protocol, Union
-from collections import UserDict
 from pandas._typing import Axes
+
 from harp import __version__
-from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
 from harp.io import MessageType, read
+from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
 from harp.schema import read_schema
 
 
@@ -31,8 +34,7 @@ class _ReadRegister(Protocol):
         file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None,
         epoch: Optional[datetime] = None,
         keep_type: bool = False,
-    ) -> DataFrame:
-        ...
+    ) -> DataFrame: ...
 
 
 class RegisterReader:
@@ -310,9 +312,12 @@ class DeviceReader:
                 base_path=path,
                 include_common_registers=include_common_registers,
                 epoch=epoch,
-                keep_type=keep_type)
+                keep_type=keep_type,
+            )
         else:
-            raise ValueError("The dataset must be a directory containing a device.yml file.")
+            raise ValueError(
+                "The dataset must be a directory containing a device.yml file."
+            )
 
 
 def _compose_parser(
@@ -462,7 +467,10 @@ def _create_register_parser(device: Model, name: str, params: _ReaderParams):
     reader = partial(reader, columns=[name])
     return RegisterReader(register, reader)
 
-@deprecated("This function is deprecated. Use DeviceReader.from_file, DeviceReader.from_url, DeviceReader.from_str, and DeviceReader.from_model instead.")
+
+@deprecated(
+    "This function is deprecated. Use DeviceReader.from_file, DeviceReader.from_url, DeviceReader.from_str, and DeviceReader.from_model instead."
+)
 def create_reader(
     device: Union[str, PathLike, Model],
     include_common_registers: bool = True,

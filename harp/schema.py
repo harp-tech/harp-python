@@ -1,8 +1,10 @@
+from importlib import resources
 from os import PathLike
 from typing import TextIO, Union
-from harp.model import Model, Registers
+
 from pydantic_yaml import parse_yaml_raw_as
-from importlib import resources
+
+from harp.model import Model, Registers
 
 
 def _read_common_registers() -> Registers:
