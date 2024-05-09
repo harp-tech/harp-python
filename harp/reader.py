@@ -340,7 +340,7 @@ def _create_register_handler(device: Model, name: str, params: _ReaderParams):
     reader = partial(reader, columns=columns)
     return RegisterReader(register, reader)
 
-
+@deprecated("This function is deprecated. Use DeviceReader.from_file, DeviceReader.from_url, DeviceReader.from_str, and DeviceReader.from_model instead.")
 def create_reader(
     device: Union[str, PathLike, Model],
     include_common_registers: bool = True,
