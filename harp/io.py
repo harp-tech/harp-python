@@ -2,9 +2,10 @@ from datetime import datetime
 from enum import IntEnum
 from os import PathLike
 from typing import Any, BinaryIO, Optional, Union
-from pandas._typing import Axes
+
 import numpy as np
 import pandas as pd
+from pandas._typing import Axes
 
 REFERENCE_EPOCH = datetime(1904, 1, 1)
 """The reference epoch for UTC harp time."""
