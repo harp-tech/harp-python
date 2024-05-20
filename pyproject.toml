@@ -32,8 +32,11 @@ classifiers = [
 dev = [
     "datamodel-code-generator",
     "pytest",
-    "black"
+    "black",
+    "isort",
+    "codespell"
 ]
+
 jupyter = [
     "ipykernel",
     "matplotlib"
@@ -56,7 +59,7 @@ include = ["harp*"]
 [tool.setuptools_scm]
 
 [tool.black]
-line-length = 88
+line-length = 108
 target-version = ['py39']
 include = '\.pyi?$'
 extend-exclude = '''
@@ -68,3 +71,10 @@ extend-exclude = '''
   | reflex-generator
 )
 '''
+
+[tool.isort]
+profile = 'black'
+
+[tool.codespell]
+skip = '.git,*.pdf,*.svg'
+ignore-words-list = 'nd'
