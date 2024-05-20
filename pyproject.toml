@@ -32,7 +32,10 @@ classifiers = [
 dev = [
     "datamodel-code-generator",
     "pytest",
-    "black"
+    "black",
+    "isort",
+    "codespell",
+
 ]
 jupyter = [
     "ipykernel",
@@ -68,3 +71,11 @@ extend-exclude = '''
   | reflex-generator
 )
 '''
+
+[tool.isort]
+line_length = 120
+profile = "black"
+
+[tool.codespell]
+skip = '.git,*.pdf,*.svg'
+ignore-words-list = 'nd'
