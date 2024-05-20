@@ -53,6 +53,9 @@ include-package-data = true
 [tool.setuptools.packages.find]
 include = ["harp*"]
 
+[tool.setuptools.dynamic]
+version = {attr = "harp.__version__"}
+
 [tool.setuptools_scm]
 
 [tool.black]
