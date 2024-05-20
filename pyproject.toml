@@ -59,7 +59,7 @@ include = ["harp*"]
 [tool.setuptools_scm]
 
 [tool.black]
-line-length = 88
+line-length = 108
 target-version = ['py39']
 include = '\.pyi?$'
 extend-exclude = '''
