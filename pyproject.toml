@@ -34,9 +34,9 @@ dev = [
     "pytest",
     "black",
     "isort",
-    "codespell",
-
+    "codespell"
 ]
+
 jupyter = [
     "ipykernel",
     "matplotlib"
