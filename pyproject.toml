@@ -73,8 +73,7 @@ extend-exclude = '''
 '''
 
 [tool.isort]
-line_length = 120
-profile = "black"
+profile = 'black'
 
 [tool.codespell]
 skip = '.git,*.pdf,*.svg'
