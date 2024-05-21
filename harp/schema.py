@@ -9,7 +9,7 @@ from harp.model import Model, Registers
 
 def _read_common_registers() -> Registers:
     file = resources.files(__package__) / "common.yml"
-    with file.open("rt") as fileIO:
+    with file.open("r") as fileIO:
         return parse_yaml_raw_as(Registers, fileIO.read())
 
 
