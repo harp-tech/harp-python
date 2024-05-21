@@ -11,9 +11,7 @@ def _read_common_registers() -> Registers:
         return parse_yaml_raw_as(Registers, fileIO.read())
 
 
-def read_schema(
-    file: Union[str, PathLike, TextIO], include_common_registers: bool = True
-) -> Model:
+def read_schema(file: Union[str, PathLike, TextIO], include_common_registers: bool = True) -> Model:
     """Read and parse a device schema from the specified file.
 
     Parameters
@@ -40,9 +38,7 @@ def read_schema(
             schema.registers = dict(common.registers, **schema.registers)
             if common.bitMasks:
                 schema.bitMasks = (
-                    common.bitMasks
-                    if schema.bitMasks is None
-                    else dict(common.bitMasks, **schema.bitMasks)
+                    common.bitMasks if schema.bitMasks is None else dict(common.bitMasks, **schema.bitMasks)
                 )
             if common.groupMasks:
                 schema.groupMasks = (

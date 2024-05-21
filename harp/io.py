@@ -73,9 +73,7 @@ def read(
     """
     data = np.fromfile(file, dtype=np.uint8)
     if len(data) == 0:
-        return pd.DataFrame(
-            columns=columns, index=pd.Index([], dtype=np.float64, name="Time")
-        )
+        return pd.DataFrame(columns=columns, index=pd.Index([], dtype=np.float64, name="Time"))
 
     if address is not None and address != data[2]:
         raise ValueError(f"expected address {address} but got {data[2]}")
@@ -86,13 +84,9 @@ def read(
     payloadtype = data[4]
     payloadoffset = 5
     if payloadtype & 0x10 != 0:
-        seconds = np.ndarray(
-            nrows, dtype=np.uint32, buffer=data, offset=payloadoffset, strides=stride
-        )
+        seconds = np.ndarray(nrows, dtype=np.uint32, buffer=data, offset=payloadoffset, strides=stride)
         payloadoffset += 4
-        micros = np.ndarray(
-            nrows, dtype=np.uint16, buffer=data, offset=payloadoffset, strides=stride
-        )
+        micros = np.ndarray(nrows, dtype=np.uint16, buffer=data, offset=payloadoffset, strides=stride)
         payloadoffset += 2
         time = micros * _SECONDS_PER_TICK + seconds
         payloadtype = payloadtype & ~0x10
@@ -121,9 +115,7 @@ def read(
 
     result = pd.DataFrame(payload, index=index, columns=columns)
     if keep_type:
-        msgtype = np.ndarray(
-            nrows, dtype=np.uint8, buffer=data, offset=0, strides=stride
-        )
+        msgtype = np.ndarray(nrows, dtype=np.uint8, buffer=data, offset=0, strides=stride)
         msgtype = pd.Categorical.from_codes(msgtype, categories=_messagetypes)  # type: ignore
         result[MessageType.__name__] = msgtype
     return result

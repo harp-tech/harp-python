@@ -136,16 +136,12 @@ class Visibility(Enum):
 class Register(BaseModel):
     address: Annotated[
         int,
-        Field(
-            le=255, description="Specifies the unique 8-bit address of the register."
-        ),
+        Field(le=255, description="Specifies the unique 8-bit address of the register."),
     ]
     type: Annotated[PayloadType, BeforeValidator(lambda v: PayloadType[v])]
     length: Annotated[
         Optional[int],
-        Field(
-            ge=1, default=1, description="Specifies the length of the register payload."
-        ),
+        Field(ge=1, default=1, description="Specifies the length of the register payload."),
     ]
     access: Union[Access, List[Access]] = Field(
         ..., description="Specifies the expected use of the register."
@@ -191,12 +187,6 @@ class Registers(BaseModel):
 
 class Model(Registers):
     device: str = Field(..., description="Specifies the name of the device.")
-    whoAmI: int = Field(
-        ..., description="Specifies the unique identifier for this device type."
-    )
-    firmwareVersion: str = Field(
-        ..., description="Specifies the semantic version of the device firmware."
-    )
-    hardwareTargets: str = Field(
-        ..., description="Specifies the semantic version of the device hardware."
-    )
+    whoAmI: int = Field(..., description="Specifies the unique identifier for this device type.")
+    firmwareVersion: str = Field(..., description="Specifies the semantic version of the device firmware.")
+    hardwareTargets: str = Field(..., description="Specifies the semantic version of the device hardware.")

@@ -26,9 +26,7 @@ testdata = [
         expected_error=ValueError,
     ),
     DataFileParam(path="data/write_0.bin", expected_address=0, expected_rows=4),
-    DataFileParam(
-        path="data/write_0.bin", expected_address=0, expected_rows=4, keep_type=True
-    ),
+    DataFileParam(path="data/write_0.bin", expected_address=0, expected_rows=4, keep_type=True),
 ]
 
 
@@ -45,10 +43,7 @@ def test_read(dataFile: DataFileParam):
         )
         assert len(data) == dataFile.expected_rows
         if dataFile.keep_type:
-            assert (
-                MessageType.__name__ in data.columns
-                and data[MessageType.__name__].dtype == "category"
-            )
+            assert MessageType.__name__ in data.columns and data[MessageType.__name__].dtype == "category"
 
         if dataFile.expected_cols:
             for col in dataFile.expected_cols:

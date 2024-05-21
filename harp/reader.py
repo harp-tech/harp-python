@@ -28,8 +28,7 @@ class _ReadRegister(Protocol):
         file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None,
         epoch: Optional[datetime] = None,
         keep_type: bool = False,
-    ) -> DataFrame:
-        ...
+    ) -> DataFrame: ...
 
 
 class RegisterReader:
@@ -50,9 +49,7 @@ class RegisterMap(UserDict[str, RegisterReader]):
 
     def __init__(self, registers: Mapping[str, RegisterReader]) -> None:
         super().__init__(registers)
-        self._address_map = {
-            value.register.address: value for value in registers.values()
-        }
+        self._address_map = {value.register.address: value for value in registers.values()}
 
     def __getitem__(self, __key: Union[str, int]) -> RegisterReader:
         if isinstance(__key, int):
@@ -266,9 +263,7 @@ def create_reader(
         base_path = path / device.device if is_dir else path.parent / device.device
 
     reg_readers = {
-        name: _create_register_parser(
-            device, name, _ReaderParams(base_path, epoch, keep_type)
-        )
+        name: _create_register_parser(device, name, _ReaderParams(base_path, epoch, keep_type))
         for name in device.registers.keys()
     }
     return DeviceReader(device, reg_readers)
