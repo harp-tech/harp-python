@@ -5,8 +5,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Dict, List, Optional, Union
-from typing_extensions import Annotated
+from typing import Dict, List, Optional, Union, Annotated
 
 from pydantic import (
     BaseModel,
