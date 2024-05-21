@@ -74,6 +74,7 @@ extend-exclude = '''
 
 [tool.isort]
 profile = 'black'
+extend_skip = 'reflex-generator'
 
 [tool.codespell]
 skip = '.git,*.pdf,*.svg'
