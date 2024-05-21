@@ -1,17 +1,19 @@
 import os
+from collections import UserDict
+from dataclasses import dataclass
+from datetime import datetime
+from functools import partial
 from math import log2
 from os import PathLike
 from pathlib import Path
-from datetime import datetime
-from functools import partial
-from dataclasses import dataclass
+from typing import Any, BinaryIO, Callable, Iterable, Mapping, Optional, Protocol, Union
+
 from numpy import dtype
 from pandas import DataFrame, Series
-from typing import Any, BinaryIO, Callable, Iterable, Mapping, Optional, Protocol, Union
-from collections import UserDict
 from pandas._typing import Axes
-from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
+
 from harp.io import MessageType, read
+from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
 from harp.schema import read_schema
 
 

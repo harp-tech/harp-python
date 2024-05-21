@@ -1,8 +1,10 @@
-import pytest
-import numpy as np
 from contextlib import nullcontext
+
+import numpy as np
+import pytest
 from pytest import mark
-from harp.io import read, MessageType
+
+from harp.io import MessageType, read
 from tests.params import DataFileParam
 
 testdata = [

@@ -1,4 +1,5 @@
 from pytest import mark
+
 from harp.schema import read_schema
 from tests.params import DeviceSchemaParam
 

@@ -1,8 +1,10 @@
-import numpy as np
+from dataclasses import dataclass
 from os import PathLike
 from pathlib import Path
-from dataclasses import dataclass
 from typing import Iterable, Optional, Type, Union
+
+import numpy as np
+
 from harp.model import Model
 
 datapath = Path(__file__).parent

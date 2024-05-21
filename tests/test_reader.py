@@ -1,5 +1,6 @@
 import numpy as np
 from pytest import mark
+
 from harp.io import REFERENCE_EPOCH, MessageType
 from harp.reader import create_reader
 from tests.params import DeviceSchemaParam
