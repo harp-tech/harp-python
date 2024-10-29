@@ -80,7 +80,7 @@ def read(
         raise ValueError(f"expected address {address} but got {data[2]}")
 
     index = None
-    stride = data[1] + 2
+    stride = int(data[1] + 2)
     nrows = len(data) // stride
     payloadtype = data[4]
     payloadoffset = 5
@@ -90,7 +90,7 @@ def read(
         micros = np.ndarray(nrows, dtype=np.uint16, buffer=data, offset=payloadoffset, strides=stride)
         payloadoffset += 2
         time = micros * _SECONDS_PER_TICK + seconds
-        payloadtype = payloadtype & ~0x10
+        payloadtype = payloadtype & ~np.uint8(0x10)
         if epoch is not None:
             time = epoch + pd.to_timedelta(time, "s")  # type: ignore
         index = pd.Series(time)
