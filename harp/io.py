@@ -80,7 +80,7 @@ def read(
         raise ValueError(f"expected address {address} but got {data[2]}")
 
     index = None
-    stride = data[1] + 2
+    stride = int(data[1] + 2)
     nrows = len(data) // stride
     payloadtype = data[4]
     payloadoffset = 5
