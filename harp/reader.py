@@ -53,11 +53,11 @@ class RegisterMap(UserDict[str, RegisterReader]):
         super().__init__(registers)
         self._address_map = {value.register.address: value for value in registers.values()}
 
-    def __getitem__(self, __key: Union[str, int]) -> RegisterReader:
-        if isinstance(__key, int):
-            return self._address_map[__key]
+    def __getitem__(self, key: Union[str, int]) -> RegisterReader:
+        if isinstance(key, int):
+            return self._address_map[key]
         else:
-            return super().__getitem__(__key)
+            return super().__getitem__(key)
 
 
 class DeviceReader:
