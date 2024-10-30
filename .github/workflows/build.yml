@@ -10,7 +10,7 @@ on:
 
 jobs:
   build_run_tests:
-    name: Build env using pip and pyproject.toml on ${{ matrix.os }}
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     if: github.event.pull_request.draft == false
     strategy:
