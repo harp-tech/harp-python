@@ -1,0 +1,47 @@
+# Builds the python environment; linter and formatting via ruff; type annotations via pyright;
+# tests via pytest; reports test coverage via pytest-cov.
+
+name: build
+on:
+  push:
+    branches: ['*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build_run_tests:
+    name: Build env using pip and pyproject.toml on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: [3.9, 3.11]
+      fail-fast: false
+    defaults:
+      run:
+        shell: ${{ matrix.os == 'windows-latest' && 'cmd' || 'bash' }} -l {0} # Adjust shell based on OS
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Create venv and install dependencies
+        run: |
+          python -m venv .venv
+          .venv/Scripts/activate || source .venv/bin/activate
+          pip install -e .[dev]
+      - name: Activate venv for later steps
+        run: |
+          echo "VIRTUAL_ENV=$(pwd)/.venv" >> $GITHUB_ENV
+          echo "$(pwd)/.venv/bin" >> $GITHUB_PATH      # For Unix-like systems
+          echo "$(pwd)/.venv/Scripts" >> $GITHUB_PATH  # For Windows
+
+      - name: ruff
+        run: ruff check .
+      - name: pyright
+        run: pyright . 
+      - name: pytest
+        run: pytest --cov harp

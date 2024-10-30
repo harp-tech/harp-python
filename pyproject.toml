@@ -33,6 +33,7 @@ dev = [
     "datamodel-code-generator",
     "pandas-stubs",
     "pytest",
+    "pytest-cov",
     "pyright",
     "ruff",
     "codespell"
