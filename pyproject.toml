@@ -31,9 +31,10 @@ classifiers = [
 [project.optional-dependencies]
 dev = [
     "datamodel-code-generator",
+    "pandas-stubs",
     "pytest",
-    "black",
-    "isort",
+    "pyright",
+    "ruff",
     "codespell"
 ]
 
@@ -58,23 +59,20 @@ include = ["harp*"]
 
 [tool.setuptools_scm]
 
-[tool.black]
+[tool.ruff]
 line-length = 108
-target-version = ['py39']
-include = '\.pyi?$'
-extend-exclude = '''
-# A regex preceded with ^/ will apply only to files and directories
-# in the root of the project.
-(
-  ^/LICENSE
-  ^/README.md
-  | reflex-generator
-)
-'''
+target-version = "py39"
+exclude = [
+    "reflex-generator"
+]
 
-[tool.isort]
-profile = 'black'
-extend_skip = 'reflex-generator'
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+exclude = [
+    ".venv/*",
+    "reflex-generator"
+]
 
 [tool.codespell]
 skip = '.git,*.pdf,*.svg'
