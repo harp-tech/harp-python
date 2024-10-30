@@ -4,8 +4,11 @@ from os import PathLike
 from typing import Any, BinaryIO, Optional, Union
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from pandas._typing import Axes
+
+from harp.typing import BufferLike
 
 REFERENCE_EPOCH = datetime(1904, 1, 1)
 """The reference epoch for UTC harp time."""
@@ -73,6 +76,59 @@ def read(
         A pandas data frame containing message data, sorted by time.
     """
     data = np.fromfile(file, dtype=np.uint8)
+    return _fromraw(data, address, dtype, length, columns, epoch, keep_type)
+
+
+def parse(
+    buffer: BufferLike,
+    address: Optional[int] = None,
+    dtype: Optional[np.dtype] = None,
+    length: Optional[int] = None,
+    columns: Optional[Axes] = None,
+    epoch: Optional[datetime] = None,
+    keep_type: bool = False,
+):
+    """Parse single-register Harp data from the specified buffer.
+
+    Parameters
+    ----------
+    buffer
+        An object that exposes a buffer interface containing binary data from
+        a single device register.
+    address
+        Expected register address. If specified, the address of
+        the first message in the buffer is used for validation.
+    dtype
+        Expected data type of the register payload. If specified, the
+        payload type of the first message in the buffer is used for validation.
+    length
+        Expected number of elements in register payload. If specified, the
+        payload length of the first message in the buffer is used for validation.
+    columns
+        The optional column labels to use for the data values.
+    epoch
+        Reference datetime at which time zero begins. If specified,
+        the result data frame will have a datetime index.
+    keep_type
+        Specifies whether to include a column with the message type.
+
+    Returns
+    -------
+        A pandas data frame containing message data, sorted by time.
+    """
+    data = np.frombuffer(buffer, dtype=np.uint8)
+    return _fromraw(data, address, dtype, length, columns, epoch, keep_type)
+
+
+def _fromraw(
+    data: npt.NDArray[np.uint8],
+    address: Optional[int] = None,
+    dtype: Optional[np.dtype] = None,
+    length: Optional[int] = None,
+    columns: Optional[Axes] = None,
+    epoch: Optional[datetime] = None,
+    keep_type: bool = False,
+):
     if len(data) == 0:
         return pd.DataFrame(columns=columns, index=pd.Index([], dtype=np.float64, name="Time"))
 
