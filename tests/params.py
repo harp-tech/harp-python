@@ -19,6 +19,7 @@ class DataFileParam:
     expected_dtype: Optional[np.dtype] = None
     expected_length: Optional[int] = None
     expected_error: Optional[Type[BaseException]] = None
+    repeat_data: Optional[int] = None
     keep_type: bool = False
 
     def __post_init__(self):
