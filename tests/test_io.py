@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from pytest import mark
 
-from harp.io import MessageType, read
+from harp.io import MessageType, parse, read
 from tests.params import DataFileParam
 
 testdata = [
@@ -29,6 +29,7 @@ testdata = [
     ),
     DataFileParam(path="data/write_0.bin", expected_address=0, expected_rows=4),
     DataFileParam(path="data/write_0.bin", expected_address=0, expected_rows=4, keep_type=True),
+    DataFileParam(path="data/device_0.bin", expected_rows=300, repeat_data=300),
 ]
 
 
@@ -36,13 +37,25 @@ testdata = [
 def test_read(dataFile: DataFileParam):
     context = pytest.raises if dataFile.expected_error else nullcontext
     with context(dataFile.expected_error):  # type: ignore
-        data = read(
-            dataFile.path,
-            address=dataFile.expected_address,
-            dtype=dataFile.expected_dtype,
-            length=dataFile.expected_length,
-            keep_type=dataFile.keep_type,
-        )
+        path = dataFile.path
+        if dataFile.repeat_data:
+            with open(path, "rb") as f:
+                buffer = f.read() * dataFile.repeat_data
+            data = parse(
+                buffer,
+                address=dataFile.expected_address,
+                dtype=dataFile.expected_dtype,
+                length=dataFile.expected_length,
+                keep_type=dataFile.keep_type,
+            )
+        else:
+            data = read(
+                path,
+                address=dataFile.expected_address,
+                dtype=dataFile.expected_dtype,
+                length=dataFile.expected_length,
+                keep_type=dataFile.keep_type,
+            )
         assert len(data) == dataFile.expected_rows
         if dataFile.keep_type:
             assert MessageType.__name__ in data.columns and data[MessageType.__name__].dtype == "category"
