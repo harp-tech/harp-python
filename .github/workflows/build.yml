@@ -18,9 +18,6 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: [3.9, 3.11]
       fail-fast: false
-    defaults:
-      run:
-        shell: ${{ matrix.os == 'windows-latest' && 'cmd' || 'bash' }} -l {0} # Adjust shell based on OS
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,16 +25,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Create venv and install dependencies
-        run: |
-          python -m venv .venv
-          .venv/Scripts/activate || source .venv/bin/activate
-          pip install -e .[dev]
-      - name: Activate venv for later steps
-        run: |
-          echo "VIRTUAL_ENV=$(pwd)/.venv" >> $GITHUB_ENV
-          echo "$(pwd)/.venv/bin" >> $GITHUB_PATH      # For Unix-like systems
-          echo "$(pwd)/.venv/Scripts" >> $GITHUB_PATH  # For Windows
+      - name: Install dependencies
+        run: pip install -e .[dev]
 
       - name: ruff
         run: ruff check .
