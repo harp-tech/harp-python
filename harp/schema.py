@@ -35,7 +35,7 @@ def read_schema(file: Union[str, PathLike, TextIO], include_common_registers: bo
             return read_schema(fileIO)
     else:
         schema = parse_yaml_raw_as(Model, file.read())
-        if not "WhoAmI" in schema.registers and include_common_registers:
+        if "WhoAmI" not in schema.registers and include_common_registers:
             common = _read_common_registers()
             schema.registers = dict(common.registers, **schema.registers)
             if common.bitMasks:
