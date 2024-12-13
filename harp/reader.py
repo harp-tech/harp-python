@@ -10,7 +10,7 @@ from typing import (Any, BinaryIO, Callable, Iterable, Mapping, Optional,
                     Protocol, Union)
 
 import requests
-from deprecated import deprecated
+from harp import deprecated
 from numpy import dtype
 from pandas import DataFrame, Series
 from pandas._typing import Axes
