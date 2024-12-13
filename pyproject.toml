@@ -11,7 +11,8 @@ license = {text = "MIT License"}
 
 dependencies = [
     "pydantic-yaml",
-    "pandas"
+    "pandas",
+    "requests"
 ]
 
 classifiers = [
