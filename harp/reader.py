@@ -6,8 +6,7 @@ from functools import partial
 from math import log2
 from os import PathLike
 from pathlib import Path
-from typing import (Any, BinaryIO, Callable, Iterable, Mapping, Optional,
-                    Protocol, Union)
+from typing import Any, BinaryIO, Callable, Iterable, Mapping, Optional, Protocol, Union
 
 import requests
 from harp import deprecated
@@ -15,7 +14,6 @@ from numpy import dtype
 from pandas import DataFrame, Series
 from pandas._typing import Axes
 
-from harp import __version__
 from harp.io import MessageType, read
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
 from harp.schema import read_schema
@@ -120,9 +118,7 @@ class DeviceReader:
             base_path = Path(base_path).absolute().resolve() / device.device
 
         reg_readers = {
-            name: _create_register_parser(
-                device, name, _ReaderParams(base_path, epoch, keep_type)
-            )
+            name: _create_register_parser(device, name, _ReaderParams(base_path, epoch, keep_type))
             for name in device.registers.keys()
         }
         return DeviceReader(device, reg_readers)
@@ -173,9 +169,7 @@ class DeviceReader:
             base_path = Path(base_path).absolute().resolve()
 
         reg_readers = {
-            name: _create_register_parser(
-                device, name, _ReaderParams(base_path, epoch, keep_type)
-            )
+            name: _create_register_parser(device, name, _ReaderParams(base_path, epoch, keep_type))
             for name in device.registers.keys()
         }
         return DeviceReader(device, reg_readers)
@@ -221,9 +215,7 @@ class DeviceReader:
             base_path = Path(base_path).absolute().resolve()
 
         reg_readers = {
-            name: _create_register_parser(
-                device, name, _ReaderParams(base_path, epoch, keep_type)
-            )
+            name: _create_register_parser(device, name, _ReaderParams(base_path, epoch, keep_type))
             for name in device.registers.keys()
         }
         return DeviceReader(device, reg_readers)
@@ -263,9 +255,7 @@ class DeviceReader:
             base_path = Path(base_path).absolute().resolve()
 
         reg_readers = {
-            name: _create_register_parser(
-                model, name, _ReaderParams(base_path, epoch, keep_type)
-            )
+            name: _create_register_parser(model, name, _ReaderParams(base_path, epoch, keep_type))
             for name in model.registers.keys()
         }
         return DeviceReader(model, reg_readers)
