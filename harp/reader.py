@@ -118,9 +118,7 @@ class DeviceReader:
             base_path = Path(base_path).absolute().resolve() / device.device
 
         reg_readers = {
-            name: _create_register_parser(
-                device, name, _ReaderParams(base_path, epoch, keep_type)
-            )
+            name: _create_register_parser(device, name, _ReaderParams(base_path, epoch, keep_type))
             for name in device.registers.keys()
         }
         return DeviceReader(device, reg_readers)
@@ -171,9 +169,7 @@ class DeviceReader:
             base_path = Path(base_path).absolute().resolve()
 
         reg_readers = {
-            name: _create_register_parser(
-                device, name, _ReaderParams(base_path, epoch, keep_type)
-            )
+            name: _create_register_parser(device, name, _ReaderParams(base_path, epoch, keep_type))
             for name in device.registers.keys()
         }
         return DeviceReader(device, reg_readers)
@@ -219,9 +215,7 @@ class DeviceReader:
             base_path = Path(base_path).absolute().resolve()
 
         reg_readers = {
-            name: _create_register_parser(
-                device, name, _ReaderParams(base_path, epoch, keep_type)
-            )
+            name: _create_register_parser(device, name, _ReaderParams(base_path, epoch, keep_type))
             for name in device.registers.keys()
         }
         return DeviceReader(device, reg_readers)
@@ -261,9 +255,7 @@ class DeviceReader:
             base_path = Path(base_path).absolute().resolve()
 
         reg_readers = {
-            name: _create_register_parser(
-                model, name, _ReaderParams(base_path, epoch, keep_type)
-            )
+            name: _create_register_parser(model, name, _ReaderParams(base_path, epoch, keep_type))
             for name in model.registers.keys()
         }
         return DeviceReader(model, reg_readers)
