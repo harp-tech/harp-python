@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, BinaryIO, Callable, Iterable, Mapping, Optional, Protocol, Union
 
 import requests
-from harp import deprecated
+from harp._helpers import deprecated
 from numpy import dtype
 from pandas import DataFrame, Series
 from pandas._typing import Axes
