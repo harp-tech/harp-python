@@ -6,12 +6,16 @@ from functools import partial
 from math import log2
 from os import PathLike
 from pathlib import Path
-from typing import Any, BinaryIO, Callable, Iterable, Mapping, Optional, Protocol, Union
+from typing import (Any, BinaryIO, Callable, Iterable, Mapping, Optional,
+                    Protocol, Union)
 
+import requests
+from deprecated import deprecated
 from numpy import dtype
 from pandas import DataFrame, Series
 from pandas._typing import Axes
 
+from harp import __version__
 from harp.io import MessageType, read
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
 from harp.schema import read_schema
@@ -73,6 +77,245 @@ class DeviceReader:
 
     def __getattr__(self, __name: str) -> RegisterReader:
         return self.registers[__name]
+
+    @staticmethod
+    def from_file(
+        filepath: PathLike,
+        base_path: Optional[PathLike] = None,
+        include_common_registers: bool = True,
+        epoch: Optional[datetime] = None,
+        keep_type: bool = False,
+    ) -> "DeviceReader":
+        """Creates a device reader object from the specified schema yml file.
+
+        Parameters
+        ----------
+        filepath
+            A path to the device yml schema describing the device.
+        base_path
+            The path to attempt to resolve the location of data files.
+        include_common_registers
+            Specifies whether to include the set of Harp common registers in the
+            parsed device schema object. If a parsed device schema object is provided,
+            this parameter is ignored.
+        epoch
+            The default reference datetime at which time zero begins. If specified,
+            the data frames returned by each register reader will have a datetime index.
+        keep_type
+            Specifies whether to include a column with the message type by default.
+
+        Returns
+        -------
+            A device reader object which can be used to read binary data for each
+            register or to access metadata about each register. Individual registers
+            can be accessed using dot notation using the name of the register as the
+            key.
+        """
+
+        device = read_schema(filepath, include_common_registers)
+        if base_path is None:
+            path = Path(filepath).absolute().resolve()
+            base_path = path.parent / device.device
+        else:
+            base_path = Path(base_path).absolute().resolve() / device.device
+
+        reg_readers = {
+            name: _create_register_parser(
+                device, name, _ReaderParams(base_path, epoch, keep_type)
+            )
+            for name in device.registers.keys()
+        }
+        return DeviceReader(device, reg_readers)
+
+    @staticmethod
+    def from_url(
+        url: str,
+        base_path: Optional[PathLike] = None,
+        include_common_registers: bool = True,
+        epoch: Optional[datetime] = None,
+        keep_type: bool = False,
+        timeout: int = 5,
+    ) -> "DeviceReader":
+        """Creates a device reader object from a url pointing to a device.yml file.
+
+        Parameters
+        ----------
+        url
+            The url pointing to the device.yml schema describing the device.
+        base_path
+            The path to attempt to resolve the location of data files.
+        include_common_registers
+            Specifies whether to include the set of Harp common registers in the
+            parsed device schema object. If a parsed device schema object is provided,
+            this parameter is ignored.
+        epoch
+            The default reference datetime at which time zero begins. If specified,
+            the data frames returned by each register reader will have a datetime index.
+        keep_type
+            Specifies whether to include a column with the message type by default.
+        timeout
+            The number of seconds to wait for the server to send data before giving up.
+        Returns
+        -------
+            A device reader object which can be used to read binary data for each
+            register or to access metadata about each register. Individual registers
+            can be accessed using dot notation using the name of the register as the
+            key.
+        """
+
+        response = requests.get(url, timeout=timeout)
+        text = response.text
+
+        device = read_schema(text, include_common_registers)
+        if base_path is None:
+            base_path = Path(device.device).absolute().resolve()
+        else:
+            base_path = Path(base_path).absolute().resolve()
+
+        reg_readers = {
+            name: _create_register_parser(
+                device, name, _ReaderParams(base_path, epoch, keep_type)
+            )
+            for name in device.registers.keys()
+        }
+        return DeviceReader(device, reg_readers)
+
+    @staticmethod
+    def from_str(
+        schema: str,
+        base_path: Optional[PathLike] = None,
+        include_common_registers: bool = True,
+        epoch: Optional[datetime] = None,
+        keep_type: bool = False,
+    ) -> "DeviceReader":
+        """Creates a device reader object from a string containing a device.yml schema.
+
+        Parameters
+        ----------
+        schema
+            The string containing the device.yml schema describing the device.
+        base_path
+            The path to attempt to resolve the location of data files.
+        include_common_registers
+            Specifies whether to include the set of Harp common registers in the
+            parsed device schema object. If a parsed device schema object is provided,
+            this parameter is ignored.
+        epoch
+            The default reference datetime at which time zero begins. If specified,
+            the data frames returned by each register reader will have a datetime index.
+        keep_type
+            Specifies whether to include a column with the message type by default.
+
+        Returns
+        -------
+            A device reader object which can be used to read binary data for each
+            register or to access metadata about each register. Individual registers
+            can be accessed using dot notation using the name of the register as the
+            key.
+        """
+
+        device = read_schema(schema, include_common_registers)
+        if base_path is None:
+            base_path = Path(device.device).absolute().resolve()
+        else:
+            base_path = Path(base_path).absolute().resolve()
+
+        reg_readers = {
+            name: _create_register_parser(
+                device, name, _ReaderParams(base_path, epoch, keep_type)
+            )
+            for name in device.registers.keys()
+        }
+        return DeviceReader(device, reg_readers)
+
+    @staticmethod
+    def from_model(
+        model: Model,
+        base_path: Optional[PathLike] = None,
+        epoch: Optional[datetime] = None,
+        keep_type: bool = False,
+    ) -> "DeviceReader":
+        """Creates a device reader object from a parsed device schema object.
+
+        Parameters
+        ----------
+        model
+            The parsed device schema object describing the device.
+        base_path
+            The path to attempt to resolve the location of data files.
+        epoch
+            The default reference datetime at which time zero begins. If specified,
+            the data frames returned by each register reader will have a datetime index.
+        keep_type
+            Specifies whether to include a column with the message type by default.
+
+        Returns
+        -------
+            A device reader object which can be used to read binary data for each
+            register or to access metadata about each register. Individual registers
+            can be accessed using dot notation using the name of the register as the
+            key.
+        """
+
+        if base_path is None:
+            base_path = Path(model.device).absolute().resolve()
+        else:
+            base_path = Path(base_path).absolute().resolve()
+
+        reg_readers = {
+            name: _create_register_parser(
+                model, name, _ReaderParams(base_path, epoch, keep_type)
+            )
+            for name in model.registers.keys()
+        }
+        return DeviceReader(model, reg_readers)
+
+    @staticmethod
+    def from_dataset(
+        dataset: PathLike,
+        include_common_registers: bool = True,
+        epoch: Optional[datetime] = None,
+        keep_type: bool = False,
+    ) -> "DeviceReader":
+        """Creates a device reader object from the specified dataset folder.
+
+        Parameters
+        ----------
+        dataset
+            A path to the dataset folder containing a device.yml schema describing the device.
+        include_common_registers
+            Specifies whether to include the set of Harp common registers in the
+            parsed device schema object. If a parsed device schema object is provided,
+            this parameter is ignored.
+        epoch
+            The default reference datetime at which time zero begins. If specified,
+            the data frames returned by each register reader will have a datetime index.
+        keep_type
+            Specifies whether to include a column with the message type by default.
+
+        Returns
+        -------
+            A device reader object which can be used to read binary data for each
+            register or to access metadata about each register. Individual registers
+            can be accessed using dot notation using the name of the register as the
+            key.
+        """
+
+        path = Path(dataset).absolute().resolve()
+        is_dir = os.path.isdir(path)
+        if is_dir:
+            filepath = path / "device.yml"
+            return DeviceReader.from_file(
+                filepath=filepath,
+                base_path=path,
+                include_common_registers=include_common_registers,
+                epoch=epoch,
+                keep_type=keep_type,
+            )
+        else:
+            raise ValueError(
+                "The dataset must be a directory containing a device.yml file."
+            )
 
     @staticmethod
     def from_file(
