@@ -67,6 +67,9 @@ exclude = [
     "reflex-generator"
 ]
 
+[tool.ruff.lint]
+select = ["I"]
+
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
