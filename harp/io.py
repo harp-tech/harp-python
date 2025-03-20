@@ -254,7 +254,7 @@ def format(
 
     if "MessageType" in data.columns:
         msgtype = data["MessageType"].cat.codes
-        payload = data.iloc[:, 0:-1].values
+        payload = data[data.columns.drop("MessageType")].values
     elif message_type is not None:
         msgtype = message_type
         payload = data.values
@@ -271,7 +271,7 @@ def format(
         is_timestamped = False
 
     if dtype is not None:
-        payload = payload.astype(dtype)
+        payload = payload.astype(dtype, copy=False)
 
     if port is None:
         port = 255
