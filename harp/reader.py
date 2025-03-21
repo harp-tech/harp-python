@@ -256,8 +256,13 @@ def _create_register_handler(device: Model, name: str, params: _ReaderParams):
         parser = _compose_parser(payload_parser, parser, params)
         return RegisterReader(register, reader, parser)
 
-    reader = partial(reader, columns=[name])
-    parser = partial(parser, columns=[name])
+    columns = (
+        [name]
+        if register.length is None or register.length == 1
+        else [f"{name}{i}" for i in range(register.length)]
+    )
+    reader = partial(reader, columns=columns)
+    parser = partial(parser, columns=columns)
     return RegisterReader(register, reader, parser)
 
 
