@@ -32,6 +32,8 @@ testdata = [
     DataFileParam(path="data/write_0.bin", expected_address=0, expected_rows=4, keep_type=True),
     DataFileParam(path="data/device_0.bin", expected_rows=300, repeat_data=300),
     DataFileParam(path="data/device_0.bin", expected_rows=1, epoch=REFERENCE_EPOCH),
+    DataFileParam(path="data/empty_0.bin", expected_rows=0, epoch=REFERENCE_EPOCH),
+    DataFileParam(path="data/empty_0.bin", expected_rows=0),
 ]
 
 
