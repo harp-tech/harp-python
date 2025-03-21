@@ -1,12 +1,23 @@
-# Environment files
-.vscode
-.venv
+# Byte-compiled / optimized / DLL files
+__pycache__/
 
-# Python temp files
-__pycache__
-*.pyc
-*.egg-info
-dist
+# Distribution / packaging
+dist/
+_version.py
+*.egg-info/
+*.egg
 
-# Data files
-/data
+# IDE
+.vscode/*
+
+# misc
+log*.txt
+scratch/
+scratch*.py
+
+# Test
+.coverage
+
+# Environment
+.venv/
+uv.lock

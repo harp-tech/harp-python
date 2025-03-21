@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from pytest import mark
 
-from harp.io import MessageType, parse, read
+from harp.io import MessageType, format, parse, read
 from tests.params import DataFileParam
 
 testdata = [
@@ -63,3 +63,26 @@ def test_read(dataFile: DataFileParam):
         if dataFile.expected_cols:
             for col in dataFile.expected_cols:
                 assert col in data.columns
+
+
+writedata = [
+    DataFileParam(path="data/device_0.bin", expected_rows=1, expected_address=0, keep_type=True),
+]
+
+
+@mark.parametrize("dataFile", writedata)
+def test_write(dataFile: DataFileParam):
+    if dataFile.expected_address is None:
+        raise AssertionError("expected address must be defined for all write tests")
+
+    buffer = np.fromfile(dataFile.path, np.uint8)
+    data = parse(
+        buffer,
+        address=dataFile.expected_address,
+        dtype=dataFile.expected_dtype,
+        length=dataFile.expected_length,
+        keep_type=dataFile.keep_type,
+    )
+    assert len(data) == dataFile.expected_rows
+    write_buffer = format(data, address=dataFile.expected_address)
+    assert np.array_equal(buffer, write_buffer)
