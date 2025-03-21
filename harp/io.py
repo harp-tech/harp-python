@@ -132,7 +132,12 @@ def _fromraw(
     keep_type: bool = False,
 ):
     if len(data) == 0:
-        return pd.DataFrame(columns=columns, index=pd.Index([], dtype=np.float64, name="Time"))
+        return pd.DataFrame(
+            columns=columns,
+            index=pd.DatetimeIndex([], name="Time")
+            if epoch
+            else pd.Index([], dtype=np.float64, name="Time"),
+        )
 
     if address is not None and address != data[2]:
         raise ValueError(f"expected address {address} but got {data[2]}")

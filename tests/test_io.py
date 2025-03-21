@@ -1,10 +1,11 @@
 from contextlib import nullcontext
 
 import numpy as np
+import pandas as pd
 import pytest
 from pytest import mark
 
-from harp.io import MessageType, format, parse, read
+from harp.io import REFERENCE_EPOCH, MessageType, format, parse, read
 from tests.params import DataFileParam
 
 testdata = [
@@ -30,6 +31,9 @@ testdata = [
     DataFileParam(path="data/write_0.bin", expected_address=0, expected_rows=4),
     DataFileParam(path="data/write_0.bin", expected_address=0, expected_rows=4, keep_type=True),
     DataFileParam(path="data/device_0.bin", expected_rows=300, repeat_data=300),
+    DataFileParam(path="data/device_0.bin", expected_rows=1, epoch=REFERENCE_EPOCH),
+    DataFileParam(path="data/empty_0.bin", expected_rows=0, epoch=REFERENCE_EPOCH),
+    DataFileParam(path="data/empty_0.bin", expected_rows=0),
 ]
 
 
@@ -46,6 +50,7 @@ def test_read(dataFile: DataFileParam):
                 address=dataFile.expected_address,
                 dtype=dataFile.expected_dtype,
                 length=dataFile.expected_length,
+                epoch=dataFile.epoch,
                 keep_type=dataFile.keep_type,
             )
         else:
@@ -54,9 +59,11 @@ def test_read(dataFile: DataFileParam):
                 address=dataFile.expected_address,
                 dtype=dataFile.expected_dtype,
                 length=dataFile.expected_length,
+                epoch=dataFile.epoch,
                 keep_type=dataFile.keep_type,
             )
         assert len(data) == dataFile.expected_rows
+        assert isinstance(data.index, pd.DatetimeIndex if dataFile.epoch else pd.Index)
         if dataFile.keep_type:
             assert MessageType.__name__ in data.columns and data[MessageType.__name__].dtype == "category"
 
