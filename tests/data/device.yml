@@ -18,6 +18,12 @@ registers:
     type: U8
     maskType: DigitalInputs
     description: Reports the state of the digital input lines.
+  AnalogData:
+    address: 44
+    type: S16
+    length: 3
+    access: Event
+    description: Reports the current values of the analog input lines.
 bitMasks:
   DigitalInputs:
     description: Specifies the state of the digital input lines.
