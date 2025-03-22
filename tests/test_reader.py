@@ -20,6 +20,7 @@ testdata = [
 
 
 @mark.parametrize("schemaFile", testdata)
+@mark.filterwarnings("ignore:Call to deprecated")
 def test_create_reader(schemaFile: DeviceSchemaParam):
     reader = create_reader(schemaFile.path, epoch=REFERENCE_EPOCH)
     schemaFile.assert_schema(reader.device)
