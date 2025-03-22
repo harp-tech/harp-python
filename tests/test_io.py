@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from pytest import mark
 
-from harp.io import REFERENCE_EPOCH, MessageType, format, read
+from harp.io import REFERENCE_EPOCH, MessageType, read, to_buffer
 from tests.params import DataFileParam
 
 testdata = [
@@ -84,5 +84,5 @@ def test_write(dataFile: DataFileParam):
         keep_type=dataFile.keep_type,
     )
     assert len(data) == dataFile.expected_rows
-    write_buffer = format(data, address=dataFile.expected_address)
+    write_buffer = to_buffer(data, address=dataFile.expected_address)
     assert np.array_equal(buffer, write_buffer)

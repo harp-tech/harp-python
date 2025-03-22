@@ -138,8 +138,8 @@ def read(
     return result
 
 
-def write(
-    file: Union[str, bytes, PathLike[Any], BinaryIO],
+def to_file(
+    file: _FileLike,
     data: pd.DataFrame,
     address: int,
     dtype: Optional[np.dtype] = None,
@@ -152,7 +152,7 @@ def write(
     Parameters
     ----------
     file
-        Open file object or filename where to store binary data from
+        File path, or open file object in which to store binary data from
         a single device register.
     data
         Pandas data frame containing message payload.
@@ -170,11 +170,11 @@ def write(
         Optional message type used for all formatted Harp messages.
         If not specified, data must contain a MessageType column.
     """
-    buffer = format(data, address, dtype, port, epoch, message_type)
+    buffer = to_buffer(data, address, dtype, port, epoch, message_type)
     buffer.tofile(file)
 
 
-def format(
+def to_buffer(
     data: pd.DataFrame,
     address: int,
     dtype: Optional[np.dtype] = None,
@@ -182,7 +182,7 @@ def format(
     epoch: Optional[datetime] = None,
     message_type: Optional[MessageType] = None,
 ) -> npt.NDArray[np.uint8]:
-    """Format single-register Harp data as a flat binary buffer.
+    """Convert single-register Harp data to a flat binary buffer.
 
     Parameters
     ----------
