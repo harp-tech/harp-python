@@ -139,10 +139,11 @@ def read(
 
 
 def to_file(
-    file: _FileLike,
     data: pd.DataFrame,
+    file: _FileLike,
     address: int,
     dtype: Optional[np.dtype] = None,
+    length: Optional[int] = None,
     port: Optional[int] = None,
     epoch: Optional[datetime] = None,
     message_type: Optional[MessageType] = None,
@@ -151,16 +152,19 @@ def to_file(
 
     Parameters
     ----------
+    data
+        Pandas data frame containing message payload.
     file
         File path, or open file object in which to store binary data from
         a single device register.
-    data
-        Pandas data frame containing message payload.
     address
         Register address used to identify all formatted Harp messages.
     dtype
         Data type of the register payload. If specified, all data will
         be converted before formatting the binary payload.
+    length
+        Expected number of elements in register payload. If specified, the
+        number of columns in the input data frame is validated.
     port
         Optional port value used for all formatted Harp messages.
     epoch
@@ -170,7 +174,7 @@ def to_file(
         Optional message type used for all formatted Harp messages.
         If not specified, data must contain a MessageType column.
     """
-    buffer = to_buffer(data, address, dtype, port, epoch, message_type)
+    buffer = to_buffer(data, address, dtype, port, length, epoch, message_type)
     buffer.tofile(file)
 
 
@@ -178,6 +182,7 @@ def to_buffer(
     data: pd.DataFrame,
     address: int,
     dtype: Optional[np.dtype] = None,
+    length: Optional[int] = None,
     port: Optional[int] = None,
     epoch: Optional[datetime] = None,
     message_type: Optional[MessageType] = None,
@@ -193,6 +198,9 @@ def to_buffer(
     dtype
         Data type of the register payload. If specified, all data will
         be converted before formatting the binary payload.
+    length
+        Expected number of elements in register payload. If specified, the
+        number of columns in the input data frame is validated.
     port
         Optional port value used for all formatted Harp messages.
     epoch
@@ -207,7 +215,8 @@ def to_buffer(
         An array object containing message data formatted according
         to the Harp binary protocol.
     """
-    if len(data) == 0:
+    nrows = len(data)
+    if nrows == 0:
         return np.empty(0, dtype=np.uint8)
 
     if "MessageType" in data.columns:
@@ -231,17 +240,20 @@ def to_buffer(
     if dtype is not None:
         payload = payload.astype(dtype, copy=False)
 
+    ncols = payload.shape[1]
+    if length is not None and ncols != length:
+        raise ValueError(f"expected payload length {length} but got {ncols}")
+
     if port is None:
         port = 255
 
     payloadtype = _payloadtypefromdtype[payload.dtype]
-    payloadlength = payload.shape[1] * payload.dtype.itemsize
+    payloadlength = ncols * payload.dtype.itemsize
     stride = payloadlength + 6
     if is_timestamped:
         payloadtype |= _PAYLOAD_TIMESTAMP_MASK
         stride += 6
 
-    nrows = len(data)
     buffer = np.empty((nrows, stride), dtype=np.uint8)
     buffer[:, 0] = msgtype
     buffer[:, 1:5] = [stride - 2, address, port, payloadtype]

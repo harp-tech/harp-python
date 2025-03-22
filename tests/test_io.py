@@ -84,5 +84,5 @@ def test_write(dataFile: DataFileParam):
         keep_type=dataFile.keep_type,
     )
     assert len(data) == dataFile.expected_rows
-    write_buffer = to_buffer(data, address=dataFile.expected_address)
+    write_buffer = to_buffer(data, address=dataFile.expected_address, length=dataFile.expected_length)
     assert np.array_equal(buffer, write_buffer)
