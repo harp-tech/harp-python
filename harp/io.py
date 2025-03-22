@@ -219,9 +219,9 @@ def to_buffer(
     if nrows == 0:
         return np.empty(0, dtype=np.uint8)
 
-    if "MessageType" in data.columns:
-        msgtype = data["MessageType"].cat.codes
-        payload = data[data.columns.drop("MessageType")].values
+    if MessageType.__name__ in data.columns:
+        msgtype = data[MessageType.__name__].cat.codes
+        payload = data[data.columns.drop(MessageType.__name__)].values
     elif message_type is not None:
         msgtype = message_type
         payload = data.values
