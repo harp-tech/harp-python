@@ -259,7 +259,7 @@ def _create_register_handler(device: Model, name: str, params: _ReaderParams):
     columns = (
         [name]
         if register.length is None or register.length == 1
-        else [f"{name}{i}" for i in range(register.length)]
+        else [f"{name}_{i}" for i in range(register.length)]
     )
     reader = partial(reader, columns=columns)
     parser = partial(parser, columns=columns)
