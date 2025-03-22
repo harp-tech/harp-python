@@ -1,4 +1,4 @@
-import numpy as np
+import pandas as pd
 from pytest import mark
 
 from harp.io import REFERENCE_EPOCH, MessageType
@@ -9,12 +9,12 @@ testdata = [
     DeviceSchemaParam(
         path="data",
         expected_whoAmI=0,
-        expected_registers=["DigitalInputMode"],
+        expected_registers=["AnalogData"],
     ),
     DeviceSchemaParam(
         path="data/device.yml",
         expected_whoAmI=0,
-        expected_registers=["DigitalInputMode"],
+        expected_registers=["AnalogData"],
     ),
 ]
 
@@ -27,8 +27,13 @@ def test_create_reader(schemaFile: DeviceSchemaParam):
 
     whoAmI = reader.WhoAmI.read()
     assert reader.device.whoAmI == whoAmI.iloc[0, 0]
-    assert whoAmI.index.dtype.type == np.datetime64
+    assert isinstance(whoAmI.index, pd.DatetimeIndex)
 
     whoAmI = reader.WhoAmI.read(epoch=None, keep_type=True)
-    assert whoAmI.index.dtype.type == np.float64
+    assert isinstance(whoAmI.index, pd.Index)
     assert whoAmI.iloc[0, -1] == MessageType.READ.name
+
+    if schemaFile.expected_registers:
+        for register_name in schemaFile.expected_registers:
+            data = reader.registers[register_name].read()
+            assert isinstance(data.index, pd.DatetimeIndex)

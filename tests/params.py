@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from os import PathLike
 from pathlib import Path
 from typing import Iterable, Optional, Type, Union
@@ -19,6 +20,8 @@ class DataFileParam:
     expected_dtype: Optional[np.dtype] = None
     expected_length: Optional[int] = None
     expected_error: Optional[Type[BaseException]] = None
+    repeat_data: Optional[int] = None
+    epoch: Optional[datetime] = None
     keep_type: bool = False
 
     def __post_init__(self):

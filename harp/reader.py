@@ -6,7 +6,7 @@ from functools import partial
 from math import log2
 from os import PathLike
 from pathlib import Path
-from typing import Any, BinaryIO, Callable, Iterable, Mapping, Optional, Protocol, Union
+from typing import Callable, Iterable, Mapping, Optional, Protocol, Union
 
 import requests
 from harp._helpers import deprecated
@@ -17,11 +17,12 @@ from pandas._typing import Axes
 from harp.io import MessageType, read
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
 from harp.schema import read_schema
+from harp.typing import _BufferLike, _FileLike
 
 
 @dataclass
 class _ReaderParams:
-    path: Path
+    base_path: Path
     epoch: Optional[datetime] = None
     keep_type: bool = False
 
@@ -29,7 +30,7 @@ class _ReaderParams:
 class _ReadRegister(Protocol):
     def __call__(
         self,
-        file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None,
+        file_or_buf: Optional[Union[_FileLike, _BufferLike]] = None,
         epoch: Optional[datetime] = None,
         keep_type: bool = False,
     ) -> DataFrame: ...
@@ -312,12 +313,12 @@ def _compose_parser(
     params: _ReaderParams,
 ) -> Callable[..., DataFrame]:
     def parser(
-        file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None,
+        data,
         columns: Optional[Axes] = None,
         epoch: Optional[datetime] = params.epoch,
         keep_type: bool = params.keep_type,
     ):
-        df = g(file, columns, epoch, keep_type)
+        df = g(data, columns, epoch, keep_type)
         result = f(df)
         type_col = df.get(MessageType.__name__)
         if type_col is not None:
@@ -398,16 +399,16 @@ def _create_payloadmember_parser(device: Model, member: PayloadMember):
 
 def _create_register_reader(register: Register, params: _ReaderParams):
     def reader(
-        file: Optional[Union[str, bytes, PathLike[Any], BinaryIO]] = None,
+        file_or_buf: Optional[Union[_FileLike, _BufferLike]] = None,
         columns: Optional[Axes] = None,
         epoch: Optional[datetime] = params.epoch,
         keep_type: bool = params.keep_type,
     ):
-        if file is None:
-            file = f"{params.path}_{register.address}.bin"
+        if file_or_buf is None:
+            file_or_buf = f"{params.base_path}_{register.address}.bin"
 
         data = read(
-            file,
+            file_or_buf,
             address=register.address,
             dtype=dtype(register.type),
             length=register.length,
@@ -420,7 +421,7 @@ def _create_register_reader(register: Register, params: _ReaderParams):
     return reader
 
 
-def _create_register_parser(device: Model, name: str, params: _ReaderParams):
+def _create_register_handler(device: Model, name: str, params: _ReaderParams):
     register = device.registers[name]
     reader = _create_register_reader(register, params)
 
@@ -428,29 +429,34 @@ def _create_register_parser(device: Model, name: str, params: _ReaderParams):
         key = register.maskType.root
         bitMask = None if device.bitMasks is None else device.bitMasks.get(key)
         if bitMask is not None:
-            parser = _create_bitmask_parser(bitMask)
-            reader = _compose_parser(parser, reader, params)
+            bitmask_parser = _create_bitmask_parser(bitMask)
+            reader = _compose_parser(bitmask_parser, reader, params)
             return RegisterReader(register, reader)
 
         groupMask = None if device.groupMasks is None else device.groupMasks.get(key)
         if groupMask is not None:
-            parser = _create_groupmask_parser(name, groupMask)
-            reader = _compose_parser(parser, reader, params)
+            groupmask_parser = _create_groupmask_parser(name, groupMask)
+            reader = _compose_parser(groupmask_parser, reader, params)
             return RegisterReader(register, reader)
 
     if register.payloadSpec is not None:
-        payload_parsers = [
+        member_parsers = [
             (key, _create_payloadmember_parser(device, member))
             for key, member in register.payloadSpec.items()
         ]
 
-        def parser(df: DataFrame):
-            return DataFrame({n: f(df) for n, f in payload_parsers}, index=df.index)
+        def payload_parser(df: DataFrame):
+            return DataFrame({n: f(df) for n, f in member_parsers}, index=df.index)
 
-        reader = _compose_parser(parser, reader, params)
+        reader = _compose_parser(payload_parser, reader, params)
         return RegisterReader(register, reader)
 
-    reader = partial(reader, columns=[name])
+    columns = (
+        [name]
+        if register.length is None or register.length == 1
+        else [f"{name}_{i}" for i in range(register.length)]
+    )
+    reader = partial(reader, columns=columns)
     return RegisterReader(register, reader)
 
 
@@ -499,7 +505,7 @@ def create_reader(
         base_path = path / device.device if is_dir else path.parent / device.device
 
     reg_readers = {
-        name: _create_register_parser(device, name, _ReaderParams(base_path, epoch, keep_type))
+        name: _create_register_handler(device, name, _ReaderParams(base_path, epoch, keep_type))
         for name in device.registers.keys()
     }
     return DeviceReader(device, reg_readers)
