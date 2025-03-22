@@ -77,8 +77,9 @@ class DeviceReader:
     def __getattr__(self, __name: str) -> RegisterReader:
         return self.registers[__name]
 
-    @staticmethod
+    @classmethod
     def from_file(
+        cls,
         filepath: PathLike,
         base_path: Optional[PathLike] = None,
         include_common_registers: bool = True,
@@ -119,13 +120,14 @@ class DeviceReader:
             base_path = Path(base_path).absolute().resolve() / device.device
 
         reg_readers = {
-            name: _create_register_parser(device, name, _ReaderParams(base_path, epoch, keep_type))
+            name: _create_register_handler(device, name, _ReaderParams(base_path, epoch, keep_type))
             for name in device.registers.keys()
         }
-        return DeviceReader(device, reg_readers)
+        return cls(device, reg_readers)
 
-    @staticmethod
+    @classmethod
     def from_url(
+        cls,
         url: str,
         base_path: Optional[PathLike] = None,
         include_common_registers: bool = True,
@@ -170,13 +172,14 @@ class DeviceReader:
             base_path = Path(base_path).absolute().resolve()
 
         reg_readers = {
-            name: _create_register_parser(device, name, _ReaderParams(base_path, epoch, keep_type))
+            name: _create_register_handler(device, name, _ReaderParams(base_path, epoch, keep_type))
             for name in device.registers.keys()
         }
-        return DeviceReader(device, reg_readers)
+        return cls(device, reg_readers)
 
-    @staticmethod
+    @classmethod
     def from_str(
+        cls,
         schema: str,
         base_path: Optional[PathLike] = None,
         include_common_registers: bool = True,
@@ -216,13 +219,14 @@ class DeviceReader:
             base_path = Path(base_path).absolute().resolve()
 
         reg_readers = {
-            name: _create_register_parser(device, name, _ReaderParams(base_path, epoch, keep_type))
+            name: _create_register_handler(device, name, _ReaderParams(base_path, epoch, keep_type))
             for name in device.registers.keys()
         }
-        return DeviceReader(device, reg_readers)
+        return cls(device, reg_readers)
 
-    @staticmethod
+    @classmethod
     def from_model(
+        cls,
         model: Model,
         base_path: Optional[PathLike] = None,
         epoch: Optional[datetime] = None,
@@ -256,13 +260,14 @@ class DeviceReader:
             base_path = Path(base_path).absolute().resolve()
 
         reg_readers = {
-            name: _create_register_parser(model, name, _ReaderParams(base_path, epoch, keep_type))
+            name: _create_register_handler(model, name, _ReaderParams(base_path, epoch, keep_type))
             for name in model.registers.keys()
         }
-        return DeviceReader(model, reg_readers)
+        return cls(model, reg_readers)
 
-    @staticmethod
+    @classmethod
     def from_dataset(
+        cls,
         dataset: PathLike,
         include_common_registers: bool = True,
         epoch: Optional[datetime] = None,
@@ -296,7 +301,7 @@ class DeviceReader:
         is_dir = os.path.isdir(path)
         if is_dir:
             filepath = path / "device.yml"
-            return DeviceReader.from_file(
+            return cls.from_file(
                 filepath=filepath,
                 base_path=path,
                 include_common_registers=include_common_registers,
