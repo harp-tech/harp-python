@@ -8,7 +8,7 @@ import numpy.typing as npt
 import pandas as pd
 from pandas._typing import Axes
 
-from harp.typing import BufferLike
+from harp.typing import _BufferLike, _FileLike
 
 REFERENCE_EPOCH = datetime(1904, 1, 1)
 """The reference epoch for UTC harp time."""
@@ -41,7 +41,7 @@ _payloadtypefromdtype = {v: k for k, v in _dtypefrompayloadtype.items()}
 
 
 def read(
-    file: Union[str, bytes, PathLike[Any], BinaryIO],
+    file_or_buf: Union[_FileLike, _BufferLike],
     address: Optional[int] = None,
     dtype: Optional[np.dtype] = None,
     length: Optional[int] = None,
@@ -49,22 +49,22 @@ def read(
     epoch: Optional[datetime] = None,
     keep_type: bool = False,
 ):
-    """Read single-register Harp data from the specified file.
+    """Read single-register Harp data from the specified file or buffer.
 
     Parameters
     ----------
-    file
-        Open file object or filename containing binary data from
+    file_or_buf
+        File path, open file object, or buffer containing binary data from
         a single device register.
     address
         Expected register address. If specified, the address of
-        the first message in the file is used for validation.
+        the first message is used for validation.
     dtype
         Expected data type of the register payload. If specified, the
-        payload type of the first message in the file is used for validation.
+        payload type of the first message is used for validation.
     length
         Expected number of elements in register payload. If specified, the
-        payload length of the first message in the file is used for validation.
+        payload length of the first message is used for validation.
     columns
         The optional column labels to use for the data values.
     epoch
@@ -77,60 +77,13 @@ def read(
     -------
         A pandas data frame containing message data, sorted by time.
     """
-    data = np.fromfile(file, dtype=np.uint8)
-    return _fromraw(data, address, dtype, length, columns, epoch, keep_type)
+    if isinstance(file_or_buf, (str, PathLike, BinaryIO)) or hasattr(file_or_buf, "readinto"):
+        # TODO: in the below we ignore the type as otherwise
+        # we have no way to runtime check _IOProtocol
+        data = np.fromfile(file_or_buf, dtype=np.uint8)  # type: ignore
+    else:
+        data = np.frombuffer(file_or_buf, dtype=np.uint8)
 
-
-def parse(
-    buffer: BufferLike,
-    address: Optional[int] = None,
-    dtype: Optional[np.dtype] = None,
-    length: Optional[int] = None,
-    columns: Optional[Axes] = None,
-    epoch: Optional[datetime] = None,
-    keep_type: bool = False,
-):
-    """Parse single-register Harp data from the specified buffer.
-
-    Parameters
-    ----------
-    buffer
-        An object that exposes a buffer interface containing binary data from
-        a single device register.
-    address
-        Expected register address. If specified, the address of
-        the first message in the buffer is used for validation.
-    dtype
-        Expected data type of the register payload. If specified, the
-        payload type of the first message in the buffer is used for validation.
-    length
-        Expected number of elements in register payload. If specified, the
-        payload length of the first message in the buffer is used for validation.
-    columns
-        The optional column labels to use for the data values.
-    epoch
-        Reference datetime at which time zero begins. If specified,
-        the result data frame will have a datetime index.
-    keep_type
-        Specifies whether to include a column with the message type.
-
-    Returns
-    -------
-        A pandas data frame containing message data, sorted by time.
-    """
-    data = np.frombuffer(buffer, dtype=np.uint8)
-    return _fromraw(data, address, dtype, length, columns, epoch, keep_type)
-
-
-def _fromraw(
-    data: npt.NDArray[np.uint8],
-    address: Optional[int] = None,
-    dtype: Optional[np.dtype] = None,
-    length: Optional[int] = None,
-    columns: Optional[Axes] = None,
-    epoch: Optional[datetime] = None,
-    keep_type: bool = False,
-):
     if len(data) == 0:
         return pd.DataFrame(
             columns=columns,
@@ -185,11 +138,12 @@ def _fromraw(
     return result
 
 
-def write(
-    file: Union[str, bytes, PathLike[Any], BinaryIO],
+def to_file(
     data: pd.DataFrame,
+    file: _FileLike,
     address: int,
     dtype: Optional[np.dtype] = None,
+    length: Optional[int] = None,
     port: Optional[int] = None,
     epoch: Optional[datetime] = None,
     message_type: Optional[MessageType] = None,
@@ -198,16 +152,19 @@ def write(
 
     Parameters
     ----------
-    file
-        Open file object or filename where to store binary data from
-        a single device register.
     data
         Pandas data frame containing message payload.
+    file
+        File path, or open file object in which to store binary data from
+        a single device register.
     address
         Register address used to identify all formatted Harp messages.
     dtype
         Data type of the register payload. If specified, all data will
         be converted before formatting the binary payload.
+    length
+        Expected number of elements in register payload. If specified, the
+        number of columns in the input data frame is validated.
     port
         Optional port value used for all formatted Harp messages.
     epoch
@@ -217,19 +174,20 @@ def write(
         Optional message type used for all formatted Harp messages.
         If not specified, data must contain a MessageType column.
     """
-    buffer = format(data, address, dtype, port, epoch, message_type)
+    buffer = to_buffer(data, address, dtype, port, length, epoch, message_type)
     buffer.tofile(file)
 
 
-def format(
+def to_buffer(
     data: pd.DataFrame,
     address: int,
     dtype: Optional[np.dtype] = None,
+    length: Optional[int] = None,
     port: Optional[int] = None,
     epoch: Optional[datetime] = None,
     message_type: Optional[MessageType] = None,
 ) -> npt.NDArray[np.uint8]:
-    """Format single-register Harp data as a flat binary buffer.
+    """Convert single-register Harp data to a flat binary buffer.
 
     Parameters
     ----------
@@ -240,6 +198,9 @@ def format(
     dtype
         Data type of the register payload. If specified, all data will
         be converted before formatting the binary payload.
+    length
+        Expected number of elements in register payload. If specified, the
+        number of columns in the input data frame is validated.
     port
         Optional port value used for all formatted Harp messages.
     epoch
@@ -254,12 +215,13 @@ def format(
         An array object containing message data formatted according
         to the Harp binary protocol.
     """
-    if len(data) == 0:
+    nrows = len(data)
+    if nrows == 0:
         return np.empty(0, dtype=np.uint8)
 
-    if "MessageType" in data.columns:
-        msgtype = data["MessageType"].cat.codes
-        payload = data[data.columns.drop("MessageType")].values
+    if MessageType.__name__ in data.columns:
+        msgtype = data[MessageType.__name__].cat.codes
+        payload = data[data.columns.drop(MessageType.__name__)].values
     elif message_type is not None:
         msgtype = message_type
         payload = data.values
@@ -278,17 +240,20 @@ def format(
     if dtype is not None:
         payload = payload.astype(dtype, copy=False)
 
+    ncols = payload.shape[1]
+    if length is not None and ncols != length:
+        raise ValueError(f"expected payload length {length} but got {ncols}")
+
     if port is None:
         port = 255
 
     payloadtype = _payloadtypefromdtype[payload.dtype]
-    payloadlength = payload.shape[1] * payload.dtype.itemsize
+    payloadlength = ncols * payload.dtype.itemsize
     stride = payloadlength + 6
     if is_timestamped:
         payloadtype |= _PAYLOAD_TIMESTAMP_MASK
         stride += 6
 
-    nrows = len(data)
     buffer = np.empty((nrows, stride), dtype=np.uint8)
     buffer[:, 0] = msgtype
     buffer[:, 1:5] = [stride - 2, address, port, payloadtype]
