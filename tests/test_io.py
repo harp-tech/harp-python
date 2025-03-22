@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from pytest import mark
 
-from harp.io import REFERENCE_EPOCH, MessageType, format, parse, read
+from harp.io import REFERENCE_EPOCH, MessageType, format, read
 from tests.params import DataFileParam
 
 testdata = [
@@ -41,27 +41,20 @@ testdata = [
 def test_read(dataFile: DataFileParam):
     context = pytest.raises if dataFile.expected_error else nullcontext
     with context(dataFile.expected_error):  # type: ignore
-        path = dataFile.path
+        file_or_buf = dataFile.path
         if dataFile.repeat_data:
-            with open(path, "rb") as f:
-                buffer = f.read() * dataFile.repeat_data
-            data = parse(
-                buffer,
-                address=dataFile.expected_address,
-                dtype=dataFile.expected_dtype,
-                length=dataFile.expected_length,
-                epoch=dataFile.epoch,
-                keep_type=dataFile.keep_type,
-            )
-        else:
-            data = read(
-                path,
-                address=dataFile.expected_address,
-                dtype=dataFile.expected_dtype,
-                length=dataFile.expected_length,
-                epoch=dataFile.epoch,
-                keep_type=dataFile.keep_type,
-            )
+            with open(file_or_buf, "rb") as f:
+                file_or_buf = f.read() * dataFile.repeat_data
+
+        data = read(
+            file_or_buf,
+            address=dataFile.expected_address,
+            dtype=dataFile.expected_dtype,
+            length=dataFile.expected_length,
+            epoch=dataFile.epoch,
+            keep_type=dataFile.keep_type,
+        )
+
         assert len(data) == dataFile.expected_rows
         assert isinstance(data.index, pd.DatetimeIndex if dataFile.epoch else pd.Index)
         if dataFile.keep_type:
@@ -83,7 +76,7 @@ def test_write(dataFile: DataFileParam):
         raise AssertionError("expected address must be defined for all write tests")
 
     buffer = np.fromfile(dataFile.path, np.uint8)
-    data = parse(
+    data = read(
         buffer,
         address=dataFile.expected_address,
         dtype=dataFile.expected_dtype,
