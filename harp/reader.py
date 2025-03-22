@@ -9,10 +9,10 @@ from pathlib import Path
 from typing import Callable, Iterable, Mapping, Optional, Protocol, Union
 
 import requests
-from typing_extensions import deprecated
 from numpy import dtype
 from pandas import DataFrame, Series
 from pandas._typing import Axes
+from typing_extensions import deprecated
 
 from harp.io import MessageType, read
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
