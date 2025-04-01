@@ -10,7 +10,7 @@ from typing import Callable, Iterable, Mapping, Optional, Protocol, Union
 
 from numpy import dtype
 from pandas import DataFrame, Series
-from pandas._typing import Axes
+from pandas._typing import Axes  # pyright: ignore[reportPrivateImportUsage]
 
 from harp.io import MessageType, read
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
