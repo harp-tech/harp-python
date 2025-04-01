@@ -24,6 +24,22 @@ registers:
     length: 3
     access: Event
     description: Reports the current values of the analog input lines.
+  AnalogDataPayloadSpec:
+    address: 44
+    type: S16
+    length: 3
+    access: Event
+    description: Reports the current values of the analog input lines.
+    payloadSpec:
+      AnalogInput0:
+        offset: 0
+        description: The voltage at the output of the ADC channel 0.
+      Encoder:
+        offset: 1
+        description: The quadrature counter value on Port 2
+      AnalogInput1:
+        offset: 2
+        description: The voltage at the output of the ADC channel 1.
 bitMasks:
   DigitalInputs:
     description: Specifies the state of the digital input lines.

@@ -16,6 +16,11 @@ testdata = [
         expected_whoAmI=0,
         expected_registers=["AnalogData"],
     ),
+    DeviceSchemaParam(
+        path="data/device.yml",
+        expected_whoAmI=0,
+        expected_registers=["AnalogDataPayloadSpec"],
+    ),
 ]
 
 
