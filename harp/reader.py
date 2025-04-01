@@ -82,7 +82,7 @@ def _compose_parser(
     params: _ReaderParams,
 ) -> Callable[..., DataFrame]:
     def parser(
-        data,
+        data: Optional[Union[_FileLike, _BufferLike]] = None,
         columns: Optional[Axes] = None,
         epoch: Optional[datetime] = params.epoch,
         keep_type: bool = params.keep_type,
