@@ -7,7 +7,7 @@ description = "A low-level interface for loading binary Harp protocol data"
 readme = "README.md"
 requires-python = ">=3.9.0"
 dynamic = ["version"]
-license = {text = "MIT License"}
+license = "MIT"
 
 dependencies = [
     "pydantic-yaml",
@@ -20,8 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
-    "Operating System :: OS Independent",
-    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
 ]
 
 [project.urls]
