@@ -6,7 +6,7 @@ from typing import Any, BinaryIO, Optional, Union
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from pandas._typing import Axes
+from pandas._typing import Axes  # pyright: ignore[reportPrivateImportUsage]
 
 from harp.typing import _BufferLike, _FileLike
 

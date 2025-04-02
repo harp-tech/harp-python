@@ -10,7 +10,7 @@ from typing import Callable, Iterable, Mapping, Optional, Protocol, Union
 
 from numpy import dtype
 from pandas import DataFrame, Series
-from pandas._typing import Axes
+from pandas._typing import Axes  # pyright: ignore[reportPrivateImportUsage]
 
 from harp.io import MessageType, read
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
@@ -82,7 +82,7 @@ def _compose_parser(
     params: _ReaderParams,
 ) -> Callable[..., DataFrame]:
     def parser(
-        data,
+        data: Optional[Union[_FileLike, _BufferLike]] = None,
         columns: Optional[Axes] = None,
         epoch: Optional[datetime] = params.epoch,
         keep_type: bool = params.keep_type,
