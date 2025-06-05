@@ -17,7 +17,6 @@ from harp.io import MessageType, read
 from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
 from harp.schema import read_schema
 from harp.typing import _BufferLike, _FileLike
-import requests
 
 
 @dataclass
@@ -309,9 +308,7 @@ class DeviceReader:
                 keep_type=keep_type,
             )
         else:
-            raise ValueError(
-                "The dataset must be a directory containing a device.yml file."
-            )
+            raise ValueError("The dataset must be a directory containing a device.yml file.")
 
     @classmethod
     def from_file(
