@@ -3,6 +3,7 @@ from collections import UserDict
 from dataclasses import dataclass
 from datetime import datetime
 from functools import partial
+from io import StringIO
 from math import log2
 from os import PathLike
 from pathlib import Path
@@ -164,18 +165,13 @@ class DeviceReader:
 
         response = requests.get(url, timeout=timeout)
         text = response.text
-
-        device = read_schema(text, include_common_registers)
-        if base_path is None:
-            base_path = Path(device.device).absolute().resolve()
-        else:
-            base_path = Path(base_path).absolute().resolve()
-
-        reg_readers = {
-            name: _create_register_handler(device, name, _ReaderParams(base_path, epoch, keep_type))
-            for name in device.registers.keys()
-        }
-        return cls(device, reg_readers)
+        return cls.from_str(
+            text,
+            base_path=base_path,
+            include_common_registers=include_common_registers,
+            epoch=epoch,
+            keep_type=keep_type,
+        )
 
     @classmethod
     def from_str(
@@ -211,12 +207,12 @@ class DeviceReader:
             can be accessed using dot notation using the name of the register as the
             key.
         """
-
-        device = read_schema(schema, include_common_registers)
+        device = read_schema(StringIO(schema), include_common_registers)
         if base_path is None:
             base_path = Path(device.device).absolute().resolve()
         else:
             base_path = Path(base_path).absolute().resolve()
+        base_path = base_path / device.device
 
         reg_readers = {
             name: _create_register_handler(device, name, _ReaderParams(base_path, epoch, keep_type))
@@ -258,6 +254,7 @@ class DeviceReader:
             base_path = Path(model.device).absolute().resolve()
         else:
             base_path = Path(base_path).absolute().resolve()
+        base_path = base_path / model.device
 
         reg_readers = {
             name: _create_register_handler(model, name, _ReaderParams(base_path, epoch, keep_type))
