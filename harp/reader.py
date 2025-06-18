@@ -81,8 +81,8 @@ class DeviceReader:
     @classmethod
     def from_file(
         cls,
-        filepath: PathLike,
-        base_path: Optional[PathLike] = None,
+        filepath: PathLike | str,
+        base_path: Optional[PathLike | str] = None,
         include_common_registers: bool = True,
         epoch: Optional[datetime] = None,
         keep_type: bool = False,
@@ -130,7 +130,7 @@ class DeviceReader:
     def from_url(
         cls,
         url: str,
-        base_path: Optional[PathLike] = None,
+        base_path: Optional[PathLike | str] = None,
         include_common_registers: bool = True,
         epoch: Optional[datetime] = None,
         keep_type: bool = False,
@@ -177,7 +177,7 @@ class DeviceReader:
     def from_str(
         cls,
         schema: str,
-        base_path: Optional[PathLike] = None,
+        base_path: Optional[PathLike | str] = None,
         include_common_registers: bool = True,
         epoch: Optional[datetime] = None,
         keep_type: bool = False,
@@ -224,7 +224,7 @@ class DeviceReader:
     def from_model(
         cls,
         model: Model,
-        base_path: Optional[PathLike] = None,
+        base_path: Optional[PathLike | str] = None,
         epoch: Optional[datetime] = None,
         keep_type: bool = False,
     ) -> "DeviceReader":
@@ -265,7 +265,7 @@ class DeviceReader:
     @classmethod
     def from_dataset(
         cls,
-        dataset: PathLike,
+        dataset: PathLike | str,
         include_common_registers: bool = True,
         epoch: Optional[datetime] = None,
         keep_type: bool = False,
