@@ -164,7 +164,9 @@ class DeviceReader:
         """
 
         response = requests.get(url, timeout=timeout)
+        response.raise_for_status()
         text = response.text
+
         return cls.from_str(
             text,
             base_path=base_path,
