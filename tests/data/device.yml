@@ -48,6 +48,11 @@ bitMasks:
       DI1: 0x2
       DI2: 0x4
       DI3: 0x8
+  StateFlowStyle:
+      description: Specifies the state of the digital input lines.
+      bits:
+        Enabled: {value: 0x0, description: The state is False}
+        Disabled: {value: 0x1, description: The state is True}
 groupMasks:
   InputMode:
     description: Specifies when the device reports the state of digital input lines.
