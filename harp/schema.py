@@ -2,9 +2,20 @@ from importlib import resources
 from os import PathLike
 from typing import TextIO, Union
 
-from pydantic_yaml import parse_yaml_raw_as
+import yaml
 
 from harp.model import Model, Registers
+
+
+def _convert_keys_to_strings(obj):
+    """Recursively converts all dictionary keys to strings.
+    This is necessary since pydantic deserialization from python objects
+    seems to expect keys to always be strings."""
+    if isinstance(obj, dict):
+        return {str(k): _convert_keys_to_strings(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_convert_keys_to_strings(i) for i in obj]
+    return obj
 
 
 def _read_common_registers() -> Registers:
@@ -13,7 +24,8 @@ def _read_common_registers() -> Registers:
 
     file = resources.files(__package__) / "common.yml"
     with file.open("r") as fileIO:
-        return parse_yaml_raw_as(Registers, fileIO.read())
+        regs_raw = _convert_keys_to_strings(yaml.safe_load(fileIO.read()))
+        return Registers.model_validate(regs_raw)
 
 
 def read_schema(file: Union[str, PathLike, TextIO], include_common_registers: bool = True) -> Model:
@@ -37,7 +49,8 @@ def read_schema(file: Union[str, PathLike, TextIO], include_common_registers: bo
         with open(file) as fileIO:
             return read_schema(fileIO)
     else:
-        schema = parse_yaml_raw_as(Model, file.read())
+        schema_raw = _convert_keys_to_strings(yaml.safe_load(file.read()))
+        schema = Model.model_validate(schema_raw)
         if "WhoAmI" not in schema.registers and include_common_registers:
             common = _read_common_registers()
             schema.registers = dict(common.registers, **schema.registers)
