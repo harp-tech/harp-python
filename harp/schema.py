@@ -1,8 +1,9 @@
 from importlib import resources
 from os import PathLike
 from typing import TextIO, Union
-from pydantic import TypeAdapter
+
 import yaml
+from pydantic import TypeAdapter
 
 from harp.model import Model, Registers
 
