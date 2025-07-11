@@ -1,8 +1,8 @@
 from importlib import resources
 from os import PathLike
 from typing import TextIO, Union
-
-from pydantic_yaml import parse_yaml_raw_as
+from pydantic import TypeAdapter
+import yaml
 
 from harp.model import Model, Registers
 
@@ -13,7 +13,8 @@ def _read_common_registers() -> Registers:
 
     file = resources.files(__package__) / "common.yml"
     with file.open("r") as fileIO:
-        return parse_yaml_raw_as(Registers, fileIO.read())
+        raw_reg = yaml.safe_load(fileIO.read())
+        return TypeAdapter(Registers).validate_python(raw_reg)
 
 
 def read_schema(file: Union[str, PathLike, TextIO], include_common_registers: bool = True) -> Model:
@@ -37,7 +38,8 @@ def read_schema(file: Union[str, PathLike, TextIO], include_common_registers: bo
         with open(file) as fileIO:
             return read_schema(fileIO)
     else:
-        schema = parse_yaml_raw_as(Model, file.read())
+        raw_schema = yaml.safe_load(file.read())
+        schema = TypeAdapter(Model).validate_python(raw_schema)
         if "WhoAmI" not in schema.registers and include_common_registers:
             common = _read_common_registers()
             schema.registers = dict(common.registers, **schema.registers)
