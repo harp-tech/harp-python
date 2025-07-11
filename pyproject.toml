@@ -10,7 +10,8 @@ dynamic = ["version"]
 license = "MIT"
 
 dependencies = [
-    "pydantic-yaml",
+    "pydantic",
+    "pyyaml",
     "pandas"
 ]
 
