@@ -3,6 +3,7 @@ __pycache__/
 
 # Distribution / packaging
 dist/
+build/
 _version.py
 *.egg-info/
 *.egg

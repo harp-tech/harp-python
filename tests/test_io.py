@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from pytest import mark
 
-from harp.io import REFERENCE_EPOCH, MessageType, read, to_buffer
+from harp.data.io import REFERENCE_EPOCH, MessageType, read, to_buffer
 from tests.params import DataFileParam
 
 testdata = [

@@ -6,7 +6,7 @@ from typing import Iterable, Optional, Type, Union
 
 import numpy as np
 
-from harp.model import Model
+from harp.data.model import Model
 
 datapath = Path(__file__).parent
 

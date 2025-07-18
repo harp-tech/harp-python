@@ -1,8 +1,8 @@
 import pandas as pd
 from pytest import mark
 
-from harp.io import REFERENCE_EPOCH, MessageType
-from harp.reader import create_reader
+from harp.data.io import REFERENCE_EPOCH, MessageType
+from harp.data.reader import create_reader
 from tests.params import DeviceSchemaParam
 
 testdata = [

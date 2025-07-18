@@ -12,10 +12,10 @@ from numpy import dtype
 from pandas import DataFrame, Series
 from pandas._typing import Axes  # pyright: ignore[reportPrivateImportUsage]
 
-from harp.io import MessageType, read
-from harp.model import BitMask, GroupMask, Model, PayloadMember, Register
-from harp.schema import read_schema
-from harp.typing import _BufferLike, _FileLike
+from harp.data.io import MessageType, read
+from harp.data.model import BitMask, GroupMask, Model, PayloadMember, Register
+from harp.data.schema import read_schema
+from harp.data.typing import _BufferLike, _FileLike
 
 
 @dataclass
