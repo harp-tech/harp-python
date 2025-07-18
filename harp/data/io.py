@@ -8,7 +8,7 @@ import numpy.typing as npt
 import pandas as pd
 from pandas._typing import Axes  # pyright: ignore[reportPrivateImportUsage]
 
-from harp.typing import _BufferLike, _FileLike
+from harp.data.typing import _BufferLike, _FileLike
 
 REFERENCE_EPOCH = datetime(1904, 1, 1)
 """The reference epoch for UTC harp time."""

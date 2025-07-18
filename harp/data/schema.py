@@ -4,7 +4,7 @@ from typing import TextIO, Union
 
 from pydantic_yaml import parse_yaml_raw_as
 
-from harp.model import Model, Registers
+from harp.data.model import Model, Registers
 
 
 def _read_common_registers() -> Registers:
