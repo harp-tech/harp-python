@@ -36,7 +36,7 @@ For example, for a dataset collected with a `Behavior` device, you might have:
 
 ```python
 import harp
-reader = harp.create_reader("device.harp")
+reader = harp.create_reader("device.yml")
 ```
 
 ### Read data from named register
@@ -54,7 +54,7 @@ reader.OperationControl.register.address
 ### Create device reader object with UTC datetime format
 
 ```python
-reader = harp.create_reader("device.harp", epoch=harp.REFERENCE_EPOCH)
+reader = harp.create_reader("device.yml", epoch=harp.REFERENCE_EPOCH)
 ```
 
 ### Read data with message type information
