@@ -108,6 +108,8 @@ def _create_bitmask_parser(bitMask: BitMask):
     lookup = [(k, _create_bit_parser(int(v.root))) for k, v in bitMask.bits.items()]
 
     def parser(df: DataFrame):
+        if df.empty:
+            return DataFrame(columns=[n for n, f in lookup], index=df.index)
         return DataFrame({n: f(df[0]) for n, f in lookup}, index=df.index)
 
     return parser
@@ -121,6 +123,8 @@ def _create_groupmask_parser(name: str, groupMask: GroupMask):
     lookup = _create_groupmask_lookup(groupMask)
 
     def parser(df: DataFrame):
+        if df.empty:
+            return DataFrame(columns=[name], index=df.index)
         return DataFrame({name: df[0].map(lookup)})
 
     return parser
@@ -215,6 +219,8 @@ def _create_register_handler(device: Model, name: str, params: _ReaderParams):
         ]
 
         def payload_parser(df: DataFrame):
+            if df.empty:
+                return DataFrame(columns=[n for n, f in member_parsers], index=df.index)
             return DataFrame({n: f(df) for n, f in member_parsers}, index=df.index)
 
         reader = _compose_parser(payload_parser, reader, params)
