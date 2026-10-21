@@ -3,8 +3,8 @@
 > [!WARNING]
 > **This package is deprecated and will no longer receive updates.**
 >
-> Please migrate to the new [`harp.data`](https://github.com/harp-tech/python) package, which supersedes this one with an improved API and continued support.
-> A [migration guide](https://harp-tech.org/python/articles/harp-python-migration/) is available to help you transition.
+> Please migrate to the new `harp-data` package from [Harp Python](https://harp-tech.org/python/), which supersedes this one with an improved API and continued support.
+> A [migration guide](https://harp-tech.org/python/articles/harp-python-migration/) covers the transition.
 
 A low-level interface to data collected with the [Harp binary protocol](https://harp-tech.org/protocol/BinaryProtocol-8bit.html).
 
