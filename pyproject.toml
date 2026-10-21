@@ -3,7 +3,7 @@ name = "harp-python"
 authors = [
     {name = "Goncalo Lopes", email = "g.lopes@neurogears.org"}
 ]
-description = "A low-level interface for loading binary Harp protocol data"
+description = "[DEPRECATED] Superseded by harp-data (https://harp-tech.org/python/). A low-level interface for loading binary Harp protocol data"
 readme = "README.md"
 requires-python = ">=3.9.0"
 dynamic = ["version"]
@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 7 - Inactive",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
@@ -26,6 +26,8 @@ classifiers = [
 [project.urls]
 "Bug Tracker" = "https://github.com/harp-tech/harp-python/issues"
 "Source Code" = "https://github.com/harp-tech/harp-python"
+"Replacement" = "https://harp-tech.org/python/"
+"Migration Guide" = "https://harp-tech.org/python/articles/harp-python-migration/"
 
 [project.optional-dependencies]
 dev = [
